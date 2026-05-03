@@ -2,17 +2,27 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 
-	interface CalendarEvent {
+	interface Activity {
+		_id: string;
+		distance: number;
+		duration: number;
+		notes: string;
+	}
+
+	interface ActivityByDate {
 		date: string;
 		count: number;
+		activities: Activity[];
 	}
 
 	let state = $state({
 		currentDate: new Date(),
 		userId: null as string | null,
 		userName: null as string | null,
-		events: new Map<string, number>(),
-		loading: true
+		events: new Map<string, ActivityByDate>(),
+		loading: true,
+		selectedDay: null as string | null,
+		selectedDayActivities: null as ActivityByDate | null
 	});
 
 	onMount(async () => {
@@ -40,8 +50,8 @@
 			}
 
 			state.events.clear();
-			data.forEach((event: CalendarEvent) => {
-				state.events.set(event.date, event.count);
+			data.forEach((event: ActivityByDate) => {
+				state.events.set(event.date, event);
 			});
 			state.events = state.events;
 		} catch (error) {
@@ -67,19 +77,49 @@
 	function previousMonth() {
 		state.currentDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() - 1);
 		state.loading = true;
+		state.selectedDay = null;
+		state.selectedDayActivities = null;
 		loadCalendarData();
 	}
 
 	function nextMonth() {
 		state.currentDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth() + 1);
 		state.loading = true;
+		state.selectedDay = null;
+		state.selectedDayActivities = null;
 		loadCalendarData();
+	}
+
+	function selectDay(dateStr: string) {
+		state.selectedDay = dateStr;
+		state.selectedDayActivities = state.events.get(dateStr) || null;
 	}
 
 	function handleLogout() {
 		localStorage.removeItem('userId');
 		localStorage.removeItem('userName');
 		goto('/auth');
+	}
+
+	function formatDistance(meters: number): string {
+		if (meters >= 1000) {
+			return `${(meters / 1000).toFixed(2)} km`;
+		}
+		return `${meters} m`;
+	}
+
+	function formatDuration(minutes: number): string {
+		const hours = Math.floor(minutes / 60);
+		const mins = minutes % 60;
+		if (hours > 0) {
+			return `${hours}h ${mins}m`;
+		}
+		return `${mins}m`;
+	}
+
+	function formatDate(dateStr: string): string {
+		const date = new Date(dateStr);
+		return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 	}
 
 	let monthName = $derived(
@@ -126,64 +166,119 @@
 			</a>
 		</div>
 
-		<!-- Calendar -->
-		<div class="rounded-lg bg-white p-6 shadow-2xl">
-			<div class="mb-6 flex items-center justify-between">
-				<button
-					onclick={previousMonth}
-					class="rounded bg-blue-500 px-4 py-2 text-white transition hover:bg-blue-600"
-				>
-					← Previous
-				</button>
-				<h2 class="text-2xl font-bold text-gray-800">{monthName}</h2>
-				<button
-					onclick={nextMonth}
-					class="rounded bg-blue-500 px-4 py-2 text-white transition hover:bg-blue-600"
-				>
-					Next →
-				</button>
+		<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+			<!-- Calendar -->
+			<div class="rounded-lg bg-white p-6 shadow-2xl lg:col-span-2">
+				<div class="mb-6 flex items-center justify-between">
+					<button
+						onclick={previousMonth}
+						class="rounded bg-blue-500 px-4 py-2 text-white transition hover:bg-blue-600"
+					>
+						← Previous
+					</button>
+					<h2 class="text-2xl font-bold text-gray-800">{monthName}</h2>
+					<button
+						onclick={nextMonth}
+						class="rounded bg-blue-500 px-4 py-2 text-white transition hover:bg-blue-600"
+					>
+						Next →
+					</button>
+				</div>
+
+				{#if state.loading}
+					<div class="text-center text-gray-600">Loading calendar...</div>
+				{:else}
+					<div class="grid grid-cols-7 gap-2">
+						<!-- Day headers -->
+						{#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as day}
+							<div class="text-center font-bold text-gray-700">{day}</div>
+						{/each}
+
+						<!-- Days -->
+						{#each paddedDays as day}
+							{#if day === null}
+								<div class="rounded bg-gray-100 p-3"></div>
+							{:else}
+								{@const dateStr = getDateString(day)}
+								{@const dayData = state.events.get(dateStr)}
+								{@const isSelected = state.selectedDay === dateStr}
+
+								<button
+									onclick={() => selectDay(dateStr)}
+									class={`min-h-20 rounded p-2 text-center transition ${
+										isSelected
+											? 'ring-2 ring-blue-500'
+											: ''
+									} ${
+										dayData
+											? 'bg-gradient-to-br from-blue-400 to-purple-500 text-white'
+											: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+									}`}
+								>
+									<div class="font-semibold">{day}</div>
+									{#if dayData}
+										<div class="mt-1 text-xs font-semibold">{dayData.count} {dayData.count === 1 ? 'swim' : 'swims'}</div>
+										<div class="mt-1 text-xs">{formatDistance(dayData.activities.reduce((sum, a) => sum + a.distance, 0))}</div>
+									{/if}
+								</button>
+							{/if}
+						{/each}
+					</div>
+
+					<div class="mt-6 space-y-2">
+						<p class="text-sm text-gray-600">
+							<span class="inline-block h-3 w-3 rounded bg-gradient-to-br from-blue-400 to-purple-500"></span>
+							Days with activities
+						</p>
+					</div>
+				{/if}
 			</div>
 
-			{#if state.loading}
-				<div class="text-center text-gray-600">Loading calendar...</div>
-			{:else}
-				<div class="grid grid-cols-7 gap-2">
-					<!-- Day headers -->
-					{#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as day}
-						<div class="text-center font-bold text-gray-700">{day}</div>
-					{/each}
+			<!-- Day Details Panel -->
+			<div class="rounded-lg bg-white p-6 shadow-lg">
+				{#if state.selectedDay && state.selectedDayActivities}
+					<div>
+						<h3 class="mb-4 text-lg font-bold text-gray-800">{formatDate(state.selectedDay)}</h3>
 
-					<!-- Days -->
-					{#each paddedDays as day}
-						{#if day === null}
-							<div class="rounded bg-gray-100 p-3"></div>
-						{:else}
-							{@const dateStr = getDateString(day)}
-							{@const eventCount = state.events.get(dateStr) || 0}
-							<div
-								class={`rounded p-3 text-center font-semibold ${
-									eventCount > 0
-										? 'bg-gradient-to-br from-blue-400 to-purple-500 text-white'
-										: 'bg-gray-100 text-gray-700'
-								}`}
-							>
-								<div>{day}</div>
-								{#if eventCount > 0}
-									<div class="text-xs">{eventCount} {eventCount === 1 ? 'battle' : 'battles'}</div>
-								{/if}
+						<div class="space-y-3">
+							{#each state.selectedDayActivities.activities as activity (activity._id)}
+								<div class="rounded-lg bg-blue-50 p-4">
+									<div class="flex items-start justify-between">
+										<div>
+											<div class="font-semibold text-gray-800">{formatDistance(activity.distance)}</div>
+											<div class="text-sm text-gray-600">{formatDuration(activity.duration)}</div>
+										</div>
+										<div class="text-right text-xs text-gray-500">
+											Pace:
+											<br />
+											{((activity.distance / activity.duration) * 60).toFixed(0)} m/min
+										</div>
+									</div>
+									{#if activity.notes}
+										<div class="mt-2 text-xs text-gray-600 italic">{activity.notes}</div>
+									{/if}
+								</div>
+							{/each}
+						</div>
+
+						<!-- Day Summary -->
+						<div class="mt-4 space-y-2 border-t pt-4">
+							{@const dayTotal = state.selectedDayActivities.activities.reduce((sum, a) => sum + a.distance, 0)}
+							{@const dayDuration = state.selectedDayActivities.activities.reduce((sum, a) => sum + a.duration, 0)}
+							<div class="flex justify-between">
+								<span class="text-sm text-gray-600">Day Total:</span>
+								<span class="font-semibold text-gray-800">{formatDistance(dayTotal)}</span>
 							</div>
-						{/if}
-					{/each}
-				</div>
-
-				<div class="mt-6 space-y-2">
-					<p class="text-sm text-gray-600">
-						<span class="inline-block h-3 w-3 rounded bg-gradient-to-br from-blue-400 to-purple-500"
-						></span>
-						Days with battles
-					</p>
-				</div>
-			{/if}
+							<div class="flex justify-between">
+								<span class="text-sm text-gray-600">Day Duration:</span>
+								<span class="font-semibold text-gray-800">{formatDuration(dayDuration)}</span>
+							</div>
+						</div>
+					</div>
+				{:else}
+					<p class="text-center text-gray-500">Select a day to view activities</p>
+				{/if}
+			</div>
 		</div>
 	</div>
 </div>

@@ -27,13 +27,13 @@ export const GET: RequestHandler = async () => {
 			_id: new ObjectId().toString(),
 			swimmer1: {
 				_id: swimmer1._id.toString(),
-				name: swimmer1.name,
-				stats: swimmer1.stats || { wins: 0, losses: 0, draws: 0 }
+				username: swimmer1.username,
+				skillLevel: swimmer1.skillLevel
 			},
 			swimmer2: {
 				_id: swimmer2._id.toString(),
-				name: swimmer2.name,
-				stats: swimmer2.stats || { wins: 0, losses: 0, draws: 0 }
+				username: swimmer2.username,
+				skillLevel: swimmer2.skillLevel
 			},
 			date: new Date().toISOString()
 		});
