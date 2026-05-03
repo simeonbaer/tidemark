@@ -207,6 +207,10 @@
 		];
 		return all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 	}
+
+	let yourDist = $derived(state.currentUserActivities.reduce((sum, a) => sum + (a.distance || 0), 0));
+	let oppDist = $derived(state.opponentStats?.stats.totalDistance ?? 0);
+	let yourPercent = $derived(calculatePercentage(oppDist, yourDist));
 </script>
 
 <div class="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-6">
@@ -289,10 +293,6 @@
 									<span class="font-semibold text-gray-700">{state.userName}</span>
 									<span class="font-semibold text-gray-700">{state.selectedOpponent.username}</span>
 								</div>
-
-								{@const yourDist = state.currentUserActivities.reduce((sum, a) => sum + (a.distance || 0), 0)}
-								{@const oppDist = state.opponentStats.stats.totalDistance}
-								{@const yourPercent = calculatePercentage(oppDist, yourDist)}
 
 								<div class="h-12 overflow-hidden rounded-lg bg-gray-200">
 									<div
@@ -394,31 +394,27 @@
 
 						<!-- Activities List -->
 						<div class="space-y-3 max-h-96 overflow-y-auto">
-							{@const allActivities = getAllActivitiesSorted(state.currentUserActivities, state.opponentStats.recentActivities)}
-							{#if allActivities.length === 0}
-								<div class="text-center text-gray-500">No activities yet</div>
-							{:else}
-								{#each allActivities as activity (activity._id)}
-									<div
-										class={`rounded-lg p-3 ${
-											activity.userName === state.userName
-												? 'border-l-4 border-blue-500 bg-blue-50'
-												: 'border-l-4 border-purple-500 bg-purple-50'
-										}`}
-									>
-										<div class="flex items-start justify-between">
-											<div>
-												<div class="font-semibold text-gray-800">{activity.userName}</div>
-												<div class="text-sm text-gray-600">{formatDistance(activity.distance)} • {formatDuration(activity.duration)}</div>
-												{#if activity.notes}
-													<div class="text-xs text-gray-500 italic">{activity.notes}</div>
-												{/if}
-											</div>
-											<div class="text-xs text-gray-500">{formatDate(activity.date)}</div>
-										</div>
+							{#if state.opponentStats}
+								{@const allActivities = getAllActivitiesSorted(state.currentUserActivities, state.opponentStats.recentActivities)}
+								{#if allActivities.length === 0}
+									<div class="text-center text-gray-500">No activities yet</div>
+								{:else}
+{#each allActivities as activity (activity._id)}
+							<div class={`rounded-lg p-3 ${activity.userName === state.userName ? 'border-l-4 border-blue-500 bg-blue-50' : 'border-l-4 border-purple-500 bg-purple-50'}`}>
+								<div class="flex items-start justify-between">
+									<div>
+										<div class="font-semibold text-gray-800">{activity.userName}</div>
+										<div class="text-sm text-gray-600">{formatDistance(activity.distance)} • {formatDuration(activity.duration)}</div>
+										{#if activity.notes}
+											<div class="text-xs text-gray-500 italic">{activity.notes}</div>
+										{/if}
 									</div>
-								{/each}
+									<div class="text-xs text-gray-500">{formatDate(activity.date)}</div>
+								</div>
+							</div>
+						{/each}
 							{/if}
+						{/if}
 						</div>
 					</div>
 				{:else}

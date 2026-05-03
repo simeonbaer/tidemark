@@ -193,8 +193,8 @@
 		{/if}
 
 		<!-- Statistics -->
-		{@const stats = getTotalStats()}
-		{#if stats.activities > 0}
+		{#if state.activities.length > 0}
+			{@const stats = getTotalStats()}
 			<div class="mb-6 grid grid-cols-3 gap-4">
 				<div class="rounded-lg bg-white p-6 shadow-lg">
 					<div class="text-sm text-gray-600">Total Distance</div>

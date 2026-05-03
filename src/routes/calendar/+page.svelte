@@ -129,6 +129,8 @@
 	let firstDay = $derived(getFirstDayOfMonth(state.currentDate));
 	let days = $derived(Array.from({ length: daysInMonth }, (_, i) => i + 1));
 	let paddedDays = $derived(Array.from({ length: firstDay }, () => null).concat(days));
+	let dayTotal = $derived(state.selectedDayActivities?.activities.reduce((sum, a) => sum + a.distance, 0) ?? 0);
+	let dayDuration = $derived(state.selectedDayActivities?.activities.reduce((sum, a) => sum + a.duration, 0) ?? 0);
 </script>
 
 <div class="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-6">
@@ -263,8 +265,6 @@
 
 						<!-- Day Summary -->
 						<div class="mt-4 space-y-2 border-t pt-4">
-							{@const dayTotal = state.selectedDayActivities.activities.reduce((sum, a) => sum + a.distance, 0)}
-							{@const dayDuration = state.selectedDayActivities.activities.reduce((sum, a) => sum + a.duration, 0)}
 							<div class="flex justify-between">
 								<span class="text-sm text-gray-600">Day Total:</span>
 								<span class="font-semibold text-gray-800">{formatDistance(dayTotal)}</span>
