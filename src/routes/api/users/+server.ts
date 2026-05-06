@@ -21,7 +21,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 		const users = await usersCollection
 			.find(query)
-			.project({ _id: 1, username: 1, skillLevel: 1 })
+			.project({ _id: 1, username: 1, skillLevel: 1, profilePicture: 1 })
 			.sort({ username: 1 })
 			.toArray();
 
@@ -29,7 +29,8 @@ export const GET: RequestHandler = async ({ url }) => {
 			users.map((u) => ({
 				_id: u._id.toString(),
 				username: u.username,
-				skillLevel: u.skillLevel
+				skillLevel: u.skillLevel,
+				profilePicture: u.profilePicture || null
 			}))
 		);
 	} catch (error) {

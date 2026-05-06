@@ -22,32 +22,8 @@ export const GET: RequestHandler = async ({ url }) => {
 			return json({ message: 'Opponent not found' }, { status: 404 });
 		}
 
-		const activities = await activitiesCollection
-			.find({ userId: new ObjectId(opponentId) })
-			.sort({ date: -1 })
-			.limit(20)
-			.toArray();
-
-		const totalDistance = activities.reduce((sum, act) => sum + (act.distance || 0), 0);
-		const totalDuration = activities.reduce((sum, act) => sum + (act.duration || 0), 0);
-
-		const result = {
-			opponent: {
-				_id: opponent._id.toString(),
-				username: opponent.username,
-				skillLevel: opponent.skillLevel
-			},
-			stats: { totalDistance, totalDuration, activityCount: activities.length },
-			recentActivities: activities.map((a) => ({
-				_id: a._id.toString(),
-				distance: a.distance || 0,
-				duration: a.duration || 0,
-				date: a.date,
-				notes: a.notes || ''
-			})),
-			activeBattle: null as object | null
-		};
-
+		// Check for active battle first (if userId provided) so we can filter activities by battle start
+		let activeBattle = null;
 		if (userId) {
 			const battle = await battlesCollection.findOne({
 				$or: [
@@ -56,9 +32,8 @@ export const GET: RequestHandler = async ({ url }) => {
 				],
 				status: 'active'
 			});
-
 			if (battle) {
-				result.activeBattle = {
+				activeBattle = {
 					_id: battle._id.toString(),
 					creatorId: battle.creatorId.toString(),
 					opponentId: battle.opponentId.toString(),
@@ -70,7 +45,38 @@ export const GET: RequestHandler = async ({ url }) => {
 			}
 		}
 
-		return json(result);
+		// Filter opponent activities: if there's an active battle, only count since battle started
+		const activityQuery: Record<string, unknown> = { userId: new ObjectId(opponentId) };
+		if (activeBattle) {
+			activityQuery.date = { $gte: activeBattle.createdAt };
+		}
+
+		const activities = await activitiesCollection
+			.find(activityQuery)
+			.sort({ date: -1 })
+			.limit(20)
+			.toArray();
+
+		const totalDistance = activities.reduce((sum, act) => sum + (act.distance || 0), 0);
+		const totalDuration = activities.reduce((sum, act) => sum + (act.duration || 0), 0);
+
+		return json({
+			opponent: {
+				_id: opponent._id.toString(),
+				username: opponent.username,
+				skillLevel: opponent.skillLevel,
+				profilePicture: opponent.profilePicture || null
+			},
+			stats: { totalDistance, totalDuration, activityCount: activities.length },
+			recentActivities: activities.map((a) => ({
+				_id: a._id.toString(),
+				distance: a.distance || 0,
+				duration: a.duration || 0,
+				date: a.date,
+				notes: a.notes || ''
+			})),
+			activeBattle
+		});
 	} catch (error) {
 		console.error('Error fetching battle data:', error);
 		return json({ message: 'Internal server error' }, { status: 500 });

@@ -6,6 +6,7 @@
 		_id: string;
 		username: string;
 		skillLevel: string;
+		profilePicture: string | null;
 	}
 
 	interface Activity {
@@ -47,7 +48,7 @@
 		opponentStats: null as OpponentStats | null,
 		activeBattle: null as Battle | null,
 		currentUserActivities: [] as Activity[],
-		newBattle: { distanceGoalKm: 0, bet: '' },
+		newBattle: { distanceGoalMeters: 0, bet: '' },
 		loading: false,
 		loadingOpponent: false,
 		errorMessage: '',
@@ -120,7 +121,7 @@
 	}
 
 	async function createBattle() {
-		if (!state.newBattle.distanceGoalKm || state.newBattle.distanceGoalKm <= 0) {
+		if (!state.newBattle.distanceGoalMeters || state.newBattle.distanceGoalMeters <= 0) {
 			state.errorMessage = 'Please enter a valid distance goal';
 			return;
 		}
@@ -132,7 +133,7 @@
 				body: JSON.stringify({
 					creatorId: state.userId,
 					opponentId: state.selectedOpponent!._id,
-					distanceGoal: Math.round(state.newBattle.distanceGoalKm * 1000),
+					distanceGoal: Math.round(state.newBattle.distanceGoalMeters),
 					bet: state.newBattle.bet
 				})
 			});
@@ -143,9 +144,7 @@
 			}
 			state.activeBattle = data;
 			state.successMessage = 'Battle created!';
-			setTimeout(() => {
-				state.successMessage = '';
-			}, 3000);
+			setTimeout(() => (state.successMessage = ''), 3000);
 		} catch (error) {
 			state.errorMessage = 'An error occurred while creating battle';
 			console.error(error);
@@ -156,7 +155,7 @@
 
 	function formatDistance(meters: number): string {
 		if (meters >= 1000) return `${(meters / 1000).toFixed(2)} km`;
-		return `${meters} m`;
+		return `${Math.round(meters)} m`;
 	}
 
 	function formatDuration(minutes: number): string {
@@ -175,6 +174,10 @@
 		});
 	}
 
+	function getInitial(name: string): string {
+		return name ? name[0].toUpperCase() : '?';
+	}
+
 	function getAllActivitiesSorted(
 		current: Activity[],
 		opponent: Activity[]
@@ -189,9 +192,15 @@
 		return all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 	}
 
-	let yourDist = $derived(
-		state.currentUserActivities.reduce((sum, a) => sum + (a.distance || 0), 0)
-	);
+	// Only count activities since the battle started
+	let yourDist = $derived.by(() => {
+		if (!state.activeBattle) return 0;
+		const battleStart = new Date(state.activeBattle.createdAt);
+		return state.currentUserActivities
+			.filter((a) => new Date(a.date) >= battleStart)
+			.reduce((sum, a) => sum + (a.distance || 0), 0);
+	});
+
 	let oppDist = $derived(state.opponentStats?.stats.totalDistance ?? 0);
 	let lead = $derived(yourDist - oppDist);
 
@@ -209,6 +218,9 @@
 	let oppProgress = $derived(
 		state.activeBattle ? Math.min((oppDist / state.activeBattle.distanceGoal) * 100, 100) : 0
 	);
+	let yourPct = $derived(Math.round(yourProgress));
+	let oppPct = $derived(Math.round(oppProgress));
+
 	let allActivities = $derived(
 		state.opponentStats
 			? getAllActivitiesSorted(state.currentUserActivities, state.opponentStats.recentActivities)
@@ -236,26 +248,49 @@
 		{/if}
 
 		<div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
-			<!-- Users list -->
+			<!-- Opponent list -->
 			<div class="rounded-2xl bg-white p-6 shadow-sm lg:col-span-1">
-				<h2 class="mb-4 text-base font-bold text-[#0D1B4B]">Select Opponent</h2>
+				<h2 class="mb-4 text-sm font-bold uppercase tracking-wide text-gray-400">
+					Select Opponent
+				</h2>
+
 				{#if state.loading}
-					<p class="text-sm text-gray-400">Loading users…</p>
+					<p class="text-sm text-gray-400">Loading…</p>
 				{:else if state.users.length === 0}
 					<p class="text-sm text-gray-400">No other users available</p>
 				{:else}
-					<div class="max-h-96 space-y-2 overflow-y-auto">
+					<div class="max-h-[28rem] space-y-2 overflow-y-auto">
 						{#each state.users as user (user._id)}
 							<button
 								onclick={() => selectOpponent(user)}
-								class={`w-full rounded-xl p-3 text-left text-sm transition ${
+								class={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition ${
 									state.selectedOpponent?._id === user._id
 										? 'bg-[#1F41BB] text-white'
 										: 'bg-[#F0F4FF] text-gray-700 hover:bg-blue-100'
 								}`}
 							>
-								<div class="font-semibold">{user.username}</div>
-								<div class="text-xs opacity-70">{user.skillLevel}</div>
+								<!-- Avatar -->
+								{#if user.profilePicture}
+									<img
+										src={user.profilePicture}
+										alt={user.username}
+										class="h-10 w-10 shrink-0 rounded-full object-cover"
+									/>
+								{:else}
+									<div
+										class={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+											state.selectedOpponent?._id === user._id
+												? 'bg-white/20 text-white'
+												: 'bg-[#0ABFBC]/20 text-[#0ABFBC]'
+										}`}
+									>
+										{getInitial(user.username)}
+									</div>
+								{/if}
+								<div class="min-w-0">
+									<div class="truncate text-sm font-semibold">{user.username}</div>
+									<div class="text-xs capitalize opacity-60">{user.skillLevel}</div>
+								</div>
 							</button>
 						{/each}
 					</div>
@@ -265,37 +300,39 @@
 			<!-- Battle panel -->
 			<div class="space-y-6 lg:col-span-3">
 				{#if state.loadingOpponent}
-					<div class="rounded-2xl bg-white p-8 text-center shadow-sm">
+					<div class="rounded-2xl bg-white p-10 text-center shadow-sm">
 						<p class="text-sm text-gray-400">Loading battle data…</p>
 					</div>
 				{:else if state.selectedOpponent && state.opponentStats}
 					{#if state.activeBattle}
-						<!-- Active battle view -->
+						<!-- ── Active Battle View ── -->
 						<div class="rounded-2xl bg-white p-6 shadow-sm">
+							<!-- Battle header -->
 							<div class="mb-5 flex items-center justify-between">
-								<h2 class="text-lg font-bold text-[#0D1B4B]">
-									vs {state.selectedOpponent.username}
-								</h2>
+								<div>
+									<h2 class="text-lg font-bold text-[#0D1B4B]">
+										vs {state.selectedOpponent.username}
+									</h2>
+									<p class="text-sm text-gray-400">
+										Goal: {formatDistance(state.activeBattle.distanceGoal)} lead
+									</p>
+								</div>
 								<span
 									class="rounded-full bg-[#2ECC71]/15 px-3 py-1 text-xs font-semibold text-[#2ECC71]"
-									>Active</span
 								>
+									Active
+								</span>
 							</div>
 
-							<div class="mb-5 flex flex-wrap gap-3">
-								<div class="rounded-xl bg-[#F0F4FF] px-3 py-2 text-sm">
-									<span class="text-gray-400">Goal:</span>
-									<span class="ml-1 font-semibold text-[#0D1B4B]">
-										{(state.activeBattle.distanceGoal / 1000).toFixed(1)} km lead
-									</span>
+							<!-- Bet banner -->
+							{#if state.activeBattle.bet}
+								<div
+									class="mb-5 flex items-center gap-2 rounded-xl bg-yellow-50 px-4 py-3 text-sm"
+								>
+									<span class="text-base">💰</span>
+									<span class="font-semibold text-yellow-800">{state.activeBattle.bet}</span>
 								</div>
-								{#if state.activeBattle.bet}
-									<div class="rounded-xl bg-yellow-50 px-3 py-2 text-sm">
-										<span class="text-gray-400">Bet:</span>
-										<span class="ml-1 font-semibold text-[#0D1B4B]">{state.activeBattle.bet}</span>
-									</div>
-								{/if}
-							</div>
+							{/if}
 
 							<!-- Winner banner -->
 							{#if winner}
@@ -308,70 +345,139 @@
 									<div class="mt-1 text-sm text-white/80">
 										Lead of {formatDistance(Math.abs(lead))}
 									</div>
+									{#if state.activeBattle.bet}
+										<div class="mt-2 text-sm font-medium text-white/90">
+											💰 {state.activeBattle.bet}
+										</div>
+									{/if}
 								</div>
 							{/if}
 
-							<!-- Progress bars -->
+							<!-- Progress bars (aquatic redesign) -->
 							<div class="space-y-5">
-								<div>
-									<div class="mb-2 flex justify-between text-sm">
-										<span class="font-semibold text-[#0D1B4B]">{state.userName} (You)</span>
-										<span class="text-gray-500">{formatDistance(yourDist)}</span>
-									</div>
-									<div class="h-5 w-full overflow-hidden rounded-full bg-gray-100">
-										<div
-											class="h-full rounded-full bg-[#1F41BB] transition-all duration-500"
-											style="width: {yourProgress}%;"
-										></div>
-									</div>
-								</div>
-								<div>
-									<div class="mb-2 flex justify-between text-sm">
-										<span class="font-semibold text-[#0D1B4B]"
-											>{state.selectedOpponent.username}</span
+								<!-- Your bar -->
+								<div class="rounded-xl bg-[#F0F4FF] p-4">
+									<div class="mb-3 flex items-center gap-3">
+										{#if state.opponentStats}
+											<!-- user avatar placeholder (current user) -->
+											<div
+												class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1F41BB] text-sm font-bold text-white shadow"
+											>
+												{getInitial(state.userName || '')}
+											</div>
+										{/if}
+										<div class="flex-1 min-w-0">
+											<div class="flex items-baseline justify-between">
+												<span class="truncate text-sm font-bold text-[#0D1B4B]"
+													>{state.userName} <span class="text-xs font-normal text-gray-400"
+														>(You)</span
+													></span
+												>
+												<span class="ml-2 shrink-0 text-sm font-semibold text-[#1F41BB]">
+													{formatDistance(yourDist)}
+												</span>
+											</div>
+											<div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-white shadow-inner">
+												<div
+													class="h-full rounded-full bg-[#1F41BB] transition-all duration-700"
+													style="width: {yourProgress}%;"
+												></div>
+											</div>
+										</div>
+										<span
+											class="w-10 shrink-0 text-right text-xs font-semibold text-[#1F41BB]"
 										>
-										<span class="text-gray-500">{formatDistance(oppDist)}</span>
-									</div>
-									<div class="h-5 w-full overflow-hidden rounded-full bg-gray-100">
-										<div
-											class="h-full rounded-full bg-[#0ABFBC] transition-all duration-500"
-											style="width: {oppProgress}%;"
-										></div>
+											{yourPct}%
+										</span>
 									</div>
 								</div>
-								<div class="pt-1 text-center text-sm">
+
+								<!-- Lead indicator -->
+								<div class="py-1 text-center text-sm">
 									{#if lead > 0}
-										<span class="font-semibold text-[#1F41BB]"
-											>You lead by {formatDistance(lead)}</span
+										<span
+											class="inline-flex items-center gap-1.5 rounded-full bg-[#1F41BB]/10 px-4 py-1.5 text-sm font-semibold text-[#1F41BB]"
 										>
-										{#if !winner}
-											<span class="text-gray-400">
-												· {formatDistance(state.activeBattle.distanceGoal - lead)} more to win
-											</span>
-										{/if}
+											🏄 You lead by {formatDistance(lead)}
+											{#if !winner}
+												<span class="font-normal text-[#1F41BB]/60"
+													>· {formatDistance(state.activeBattle.distanceGoal - lead)} to win</span
+												>
+											{/if}
+										</span>
 									{:else if lead < 0}
-										<span class="font-semibold text-[#0ABFBC]"
-											>{state.selectedOpponent.username} leads by {formatDistance(
-												Math.abs(lead)
-											)}</span
+										<span
+											class="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B6B]/10 px-4 py-1.5 text-sm font-semibold text-[#FF6B6B]"
 										>
-										{#if !winner}
-											<span class="text-gray-400">
-												· Opponent needs {formatDistance(
-													state.activeBattle.distanceGoal - Math.abs(lead)
-												)} more to win
-											</span>
-										{/if}
+											🏄 {state.selectedOpponent.username} leads by {formatDistance(Math.abs(lead))}
+											{#if !winner}
+												<span class="font-normal text-[#FF6B6B]/60"
+													>· {formatDistance(
+														state.activeBattle.distanceGoal - Math.abs(lead)
+													)} to win</span
+												>
+											{/if}
+										</span>
 									{:else}
-										<span class="text-gray-400">Tied — both swimmers are even.</span>
+										<span
+											class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-500"
+										>
+											⚖️ Tied
+										</span>
 									{/if}
 								</div>
+
+								<!-- Opponent bar -->
+								<div class="rounded-xl bg-[#FFF5F5] p-4">
+									<div class="mb-3 flex items-center gap-3">
+										{#if state.opponentStats.opponent.profilePicture}
+											<img
+												src={state.opponentStats.opponent.profilePicture}
+												alt={state.selectedOpponent.username}
+												class="h-10 w-10 shrink-0 rounded-full object-cover shadow"
+											/>
+										{:else}
+											<div
+												class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FF6B6B] text-sm font-bold text-white shadow"
+											>
+												{getInitial(state.selectedOpponent.username)}
+											</div>
+										{/if}
+										<div class="flex-1 min-w-0">
+											<div class="flex items-baseline justify-between">
+												<span class="truncate text-sm font-bold text-[#0D1B4B]"
+													>{state.selectedOpponent.username}</span
+												>
+												<span class="ml-2 shrink-0 text-sm font-semibold text-[#FF6B6B]">
+													{formatDistance(oppDist)}
+												</span>
+											</div>
+											<div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-white shadow-inner">
+												<div
+													class="h-full rounded-full bg-[#FF6B6B] transition-all duration-700"
+													style="width: {oppProgress}%;"
+												></div>
+											</div>
+										</div>
+										<span class="w-10 shrink-0 text-right text-xs font-semibold text-[#FF6B6B]">
+											{oppPct}%
+										</span>
+									</div>
+								</div>
 							</div>
+
+							<!-- Goal reminder -->
+							<p class="mt-4 text-center text-xs text-gray-400">
+								Goal: swim {formatDistance(state.activeBattle.distanceGoal)} more than your opponent
+								· Progress counts from battle start
+							</p>
 						</div>
 
 						<!-- Recent activities -->
 						<div class="rounded-2xl bg-white p-6 shadow-sm">
-							<h2 class="mb-4 text-base font-bold text-[#0D1B4B]">Recent Activities</h2>
+							<h2 class="mb-4 text-sm font-bold uppercase tracking-wide text-gray-400">
+								Recent Activities
+							</h2>
 							<div class="max-h-96 space-y-3 overflow-y-auto">
 								{#if allActivities.length === 0}
 									<p class="text-center text-sm text-gray-400">No activities yet</p>
@@ -381,7 +487,7 @@
 											class={`rounded-xl p-3 text-sm ${
 												activity.userName === state.userName
 													? 'border-l-4 border-[#1F41BB] bg-[#F0F4FF]'
-													: 'border-l-4 border-[#0ABFBC] bg-teal-50'
+													: 'border-l-4 border-[#FF6B6B] bg-[#FFF5F5]'
 											}`}
 										>
 											<div class="flex items-start justify-between">
@@ -402,36 +508,44 @@
 							</div>
 						</div>
 					{:else}
-						<!-- Create battle form -->
+						<!-- ── Create Battle Form ── -->
 						<div class="rounded-2xl bg-white p-6 shadow-sm">
 							<h2 class="mb-1 text-lg font-bold text-[#0D1B4B]">
 								Challenge {state.selectedOpponent.username}
 							</h2>
 							<p class="mb-6 text-sm text-gray-400">
-								Set a lead goal — first swimmer to be that far ahead wins!
+								First to lead by the goal distance wins. Progress only counts from battle start.
 							</p>
+
 							<div class="space-y-5">
 								<div>
-									<label for="battle-goal" class="block text-sm font-medium text-gray-700"
-										>Distance Goal (km)</label
-									>
+									<label for="battle-goal" class="block text-sm font-medium text-gray-700">
+										Distance Goal (meters)
+									</label>
 									<input
 										id="battle-goal"
 										type="number"
-										bind:value={state.newBattle.distanceGoalKm}
-										min="0.1"
-										step="0.5"
-										placeholder="e.g. 10"
+										bind:value={state.newBattle.distanceGoalMeters}
+										min="100"
+										step="100"
+										placeholder="e.g. 50000 = 50 km"
 										class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
 									/>
-									<p class="mt-1 text-xs text-gray-400">
-										First to swim this many km more than the opponent wins
-									</p>
+									{#if state.newBattle.distanceGoalMeters > 0}
+										<p class="mt-1 text-xs text-gray-400">
+											= {(state.newBattle.distanceGoalMeters / 1000).toFixed(1)} km lead needed to win
+										</p>
+									{:else}
+										<p class="mt-1 text-xs text-gray-400">
+											First to swim this many meters more than opponent wins
+										</p>
+									{/if}
 								</div>
+
 								<div>
-									<label for="battle-bet" class="block text-sm font-medium text-gray-700"
-										>Bet (optional)</label
-									>
+									<label for="battle-bet" class="block text-sm font-medium text-gray-700">
+										Bet (optional)
+									</label>
 									<input
 										id="battle-bet"
 										type="text"
@@ -440,22 +554,43 @@
 										class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
 									/>
 								</div>
+
 								<button
 									onclick={createBattle}
 									disabled={state.loading}
 									class="w-full rounded-xl bg-[#1F41BB] py-3 text-sm font-semibold text-white transition hover:bg-[#1a38a8] disabled:bg-gray-300"
 								>
-									{state.loading ? 'Creating…' : 'Create Battle'}
+									{state.loading ? 'Creating…' : 'Create Battle ⚔️'}
 								</button>
 							</div>
 						</div>
 
 						<!-- Opponent stats preview -->
 						<div class="rounded-2xl bg-white p-6 shadow-sm">
-							<h2 class="mb-4 text-base font-bold text-[#0D1B4B]">
-								{state.selectedOpponent.username}'s Stats
-							</h2>
-							<div class="grid grid-cols-3 gap-4">
+							<div class="mb-4 flex items-center gap-3">
+								{#if state.opponentStats.opponent.profilePicture}
+									<img
+										src={state.opponentStats.opponent.profilePicture}
+										alt={state.selectedOpponent.username}
+										class="h-12 w-12 rounded-full object-cover ring-2 ring-[#0ABFBC]"
+									/>
+								{:else}
+									<div
+										class="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B6B] text-lg font-bold text-white ring-2 ring-[#FF6B6B]/40"
+									>
+										{getInitial(state.selectedOpponent.username)}
+									</div>
+								{/if}
+								<div>
+									<h2 class="text-base font-bold text-[#0D1B4B]">
+										{state.selectedOpponent.username}
+									</h2>
+									<p class="text-xs capitalize text-gray-400">
+										{state.selectedOpponent.skillLevel}
+									</p>
+								</div>
+							</div>
+							<div class="grid grid-cols-3 gap-3">
 								<div class="rounded-xl bg-[#F0F4FF] p-4 text-center">
 									<p class="text-xs text-gray-400">Distance</p>
 									<p class="mt-1 text-lg font-bold text-[#0ABFBC]">
@@ -479,7 +614,7 @@
 					{/if}
 				{:else if !state.selectedOpponent}
 					<div class="rounded-2xl bg-white p-10 text-center shadow-sm">
-						<div class="mb-3 text-4xl">⚔️</div>
+						<div class="mb-3 text-5xl">⚔️</div>
 						<p class="text-gray-400">Select an opponent to start a battle</p>
 					</div>
 				{/if}

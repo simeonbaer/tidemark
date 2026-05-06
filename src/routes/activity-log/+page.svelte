@@ -12,6 +12,8 @@
 		createdAt: string;
 	}
 
+	const today = new Date().toISOString().split('T')[0];
+
 	let state = $state({
 		activities: [] as Activity[],
 		loading: true,
@@ -21,7 +23,7 @@
 		newActivity: {
 			distance: 0,
 			duration: 0,
-			date: new Date().toISOString().split('T')[0],
+			date: today,
 			notes: ''
 		},
 		showForm: false
@@ -125,11 +127,16 @@
 		return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}/km`;
 	}
 
+	// Only show activities with a date on or before today
+	let visibleActivities = $derived(
+		state.activities.filter((a) => new Date(a.date) <= new Date(today + 'T23:59:59'))
+	);
+
 	function getTotalStats() {
 		return {
-			distance: state.activities.reduce((sum, a) => sum + (a.distance || 0), 0),
-			duration: state.activities.reduce((sum, a) => sum + (a.duration || 0), 0),
-			activities: state.activities.length
+			distance: visibleActivities.reduce((sum, a) => sum + (a.distance || 0), 0),
+			duration: visibleActivities.reduce((sum, a) => sum + (a.duration || 0), 0),
+			activities: visibleActivities.length
 		};
 	}
 </script>
@@ -154,7 +161,7 @@
 		{/if}
 
 		<!-- Stats -->
-		{#if state.activities.length > 0}
+		{#if visibleActivities.length > 0}
 			{@const stats = getTotalStats()}
 			<div class="mb-6 grid grid-cols-3 gap-4">
 				<div class="rounded-2xl bg-white p-5 shadow-sm">
@@ -223,6 +230,7 @@
 							id="log-date"
 							type="date"
 							bind:value={state.newActivity.date}
+							max={today}
 							class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
 						/>
 					</div>
@@ -251,14 +259,14 @@
 		<!-- Activities list -->
 		{#if state.loading}
 			<p class="text-center text-sm text-gray-400">Loading activities…</p>
-		{:else if state.activities.length === 0}
+		{:else if visibleActivities.length === 0}
 			<div class="rounded-2xl bg-white p-10 text-center shadow-sm">
 				<div class="mb-3 text-4xl">🏊</div>
 				<p class="text-gray-400">No swims logged yet. Log your first swim to get started!</p>
 			</div>
 		{:else}
 			<div class="space-y-4">
-				{#each state.activities as activity}
+				{#each visibleActivities as activity}
 					<div class="rounded-2xl bg-white p-6 shadow-sm">
 						<div class="mb-3 flex items-start justify-between">
 							<div>
