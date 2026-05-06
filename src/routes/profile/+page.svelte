@@ -13,6 +13,13 @@
 			totalDuration: number;
 			totalSwims: number;
 			battleCount: number;
+			battlesWon: number;
+			battlesLost: number;
+			winRate: number;
+			personalBestDistance: number;
+			personalBestPace: number;
+			thisMonthDistance: number;
+			lastMonthDistance: number;
 		};
 	}
 
@@ -140,6 +147,7 @@
 	}
 
 	function formatDistance(meters: number): string {
+		if (meters === 0) return '0 m';
 		return `${(meters / 1000).toFixed(2)} km`;
 	}
 
@@ -148,6 +156,20 @@
 		const mins = minutes % 60;
 		if (hours > 0) return `${hours}h ${mins}m`;
 		return `${mins}m`;
+	}
+
+	function formatPace(minPer100m: number): string {
+		if (minPer100m === 0) return '—';
+		return `${minPer100m.toFixed(1)} min/100m`;
+	}
+
+	function monthImprovement(
+		thisMonth: number,
+		lastMonth: number
+	): { pct: number; improved: boolean } {
+		if (lastMonth === 0) return { pct: thisMonth > 0 ? 100 : 0, improved: thisMonth > 0 };
+		const raw = Math.round(((thisMonth - lastMonth) / lastMonth) * 100);
+		return { pct: Math.abs(raw), improved: raw >= 0 };
 	}
 
 	const skillLevels = ['beginner', 'intermediate', 'advanced', 'elite'];
@@ -177,51 +199,80 @@
 				<p class="text-gray-400">Loading profile…</p>
 			</div>
 		{:else if state.profile}
+			{@const imp = monthImprovement(
+				state.profile.stats.thisMonthDistance,
+				state.profile.stats.lastMonthDistance
+			)}
 			<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-				<!-- Profile card -->
-				<div class="rounded-2xl bg-white p-6 shadow-sm">
-					<div class="flex flex-col items-center">
-						<!-- Avatar -->
-						{#if state.profile.profilePicture}
-							<img
-								src={state.profile.profilePicture}
-								alt="Profile"
-								class="h-24 w-24 rounded-full object-cover ring-4 ring-[#0ABFBC]"
-							/>
-						{:else}
-							<div
-								class="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#1F41BB] to-[#0ABFBC] text-3xl font-bold text-white ring-4 ring-[#0ABFBC]/40"
-							>
-								{state.profile.username[0].toUpperCase()}
-							</div>
-						{/if}
+				<!-- Left column: avatar + monthly progress -->
+				<div class="space-y-4">
+					<div class="rounded-2xl bg-white p-6 shadow-sm">
+						<div class="flex flex-col items-center">
+							{#if state.profile.profilePicture}
+								<img
+									src={state.profile.profilePicture}
+									alt="Profile"
+									class="h-24 w-24 rounded-full object-cover ring-4 ring-[#0ABFBC]"
+								/>
+							{:else}
+								<div
+									class="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#1F41BB] to-[#0ABFBC] text-3xl font-bold text-white ring-4 ring-[#0ABFBC]/40"
+								>
+									{state.profile.username[0].toUpperCase()}
+								</div>
+							{/if}
 
-						<!-- Upload button -->
-						<label
-							for="profile-pic"
-							class="mt-3 cursor-pointer rounded-lg bg-[#F0F4FF] px-4 py-2 text-sm font-medium text-[#1F41BB] transition hover:bg-blue-100"
-						>
-							{state.uploading ? 'Uploading…' : 'Change Photo'}
-						</label>
-						<input
-							id="profile-pic"
-							type="file"
-							accept="image/*"
-							class="hidden"
-							onchange={handleImageUpload}
-						/>
+							<label
+								for="profile-pic"
+								class="mt-3 cursor-pointer rounded-lg bg-[#F0F4FF] px-4 py-2 text-sm font-medium text-[#1F41BB] transition hover:bg-blue-100"
+							>
+								{state.uploading ? 'Uploading…' : 'Change Photo'}
+							</label>
+							<input
+								id="profile-pic"
+								type="file"
+								accept="image/*"
+								class="hidden"
+								onchange={handleImageUpload}
+							/>
+						</div>
+
+						<div class="mt-5 text-center">
+							<h2 class="text-xl font-bold text-[#0D1B4B]">{state.profile.username}</h2>
+							<p class="mt-1 text-sm capitalize text-gray-500">{state.profile.skillLevel}</p>
+							<p class="mt-1 text-xs text-gray-400">{state.profile.email}</p>
+						</div>
 					</div>
 
-					<div class="mt-5 text-center">
-						<h2 class="text-xl font-bold text-[#0D1B4B]">{state.profile.username}</h2>
-						<p class="mt-1 text-sm capitalize text-gray-500">{state.profile.skillLevel}</p>
-						<p class="mt-1 text-xs text-gray-400">{state.profile.email}</p>
+					<!-- Monthly improvement -->
+					<div class="rounded-2xl bg-white p-5 shadow-sm">
+						<p class="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">
+							Monthly Progress
+						</p>
+						<p class="text-2xl font-bold text-[#0D1B4B]">
+							{formatDistance(state.profile.stats.thisMonthDistance)}
+						</p>
+						<p class="mt-0.5 text-xs text-gray-400">this month</p>
+						{#if state.profile.stats.lastMonthDistance > 0 || state.profile.stats.thisMonthDistance > 0}
+							<div class="mt-2 flex items-center gap-1.5">
+								<span
+									class={`text-sm font-bold ${imp.improved ? 'text-[#2ECC71]' : 'text-[#FF6B6B]'}`}
+								>
+									{imp.improved ? '↑' : '↓'}{imp.pct}%
+								</span>
+								<span class="text-xs text-gray-400">
+									vs {formatDistance(state.profile.stats.lastMonthDistance)} last month
+								</span>
+							</div>
+						{:else}
+							<p class="mt-2 text-xs text-gray-400">No data yet</p>
+						{/if}
 					</div>
 				</div>
 
-				<!-- Stats + edit -->
+				<!-- Right column: stats + edit -->
 				<div class="space-y-6 lg:col-span-2">
-					<!-- Stats grid -->
+					<!-- Swim stats -->
 					<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
 						<div class="rounded-2xl bg-white p-5 shadow-sm">
 							<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Distance</p>
@@ -246,6 +297,56 @@
 							<p class="mt-2 text-2xl font-bold text-[#FF6B6B]">
 								{state.profile.stats.battleCount}
 							</p>
+						</div>
+					</div>
+
+					<!-- Battle record -->
+					<div class="rounded-2xl bg-white p-6 shadow-sm">
+						<h3 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
+							Battle Record
+						</h3>
+						<div class="grid grid-cols-3 gap-4">
+							<div class="rounded-xl bg-green-50 p-4 text-center">
+								<p class="text-xs font-medium text-green-600">Won</p>
+								<p class="mt-1 text-2xl font-bold text-[#2ECC71]">
+									{state.profile.stats.battlesWon}
+								</p>
+							</div>
+							<div class="rounded-xl bg-red-50 p-4 text-center">
+								<p class="text-xs font-medium text-red-500">Lost</p>
+								<p class="mt-1 text-2xl font-bold text-[#FF6B6B]">
+									{state.profile.stats.battlesLost}
+								</p>
+							</div>
+							<div class="rounded-xl bg-[#F0F4FF] p-4 text-center">
+								<p class="text-xs font-medium text-gray-500">Win Rate</p>
+								<p class="mt-1 text-2xl font-bold text-[#1F41BB]">
+									{state.profile.stats.winRate}%
+								</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Personal bests -->
+					<div class="rounded-2xl bg-white p-6 shadow-sm">
+						<h3 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
+							Personal Bests
+						</h3>
+						<div class="grid grid-cols-2 gap-4">
+							<div class="rounded-xl bg-[#F0F4FF] p-4">
+								<p class="text-xs font-medium text-gray-500">Best Single Distance</p>
+								<p class="mt-1 text-xl font-bold text-[#1F41BB]">
+									{state.profile.stats.personalBestDistance > 0
+										? formatDistance(state.profile.stats.personalBestDistance)
+										: '—'}
+								</p>
+							</div>
+							<div class="rounded-xl bg-[#F0F4FF] p-4">
+								<p class="text-xs font-medium text-gray-500">Best Pace</p>
+								<p class="mt-1 text-xl font-bold text-[#0ABFBC]">
+									{formatPace(state.profile.stats.personalBestPace)}
+								</p>
+							</div>
 						</div>
 					</div>
 

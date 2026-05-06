@@ -10,6 +10,8 @@
 		date: string;
 		notes: string;
 		createdAt: string;
+		swimStyle: string;
+		poolSize: number;
 	}
 
 	const now = new Date();
@@ -31,7 +33,9 @@
 			duration: 0,
 			date: today,
 			time: nowTime(),
-			notes: ''
+			notes: '',
+			swimStyle: 'unspecified',
+			poolSize: 25
 		},
 		showForm: false
 	});
@@ -77,7 +81,9 @@
 					distance: state.newActivity.distance,
 					duration: state.newActivity.duration,
 					date: new Date(`${state.newActivity.date}T${state.newActivity.time}`).toISOString(),
-					notes: state.newActivity.notes
+					notes: state.newActivity.notes,
+					swimStyle: state.newActivity.swimStyle,
+					poolSize: state.newActivity.poolSize
 				})
 			});
 			const data = await response.json();
@@ -91,7 +97,9 @@
 				duration: 0,
 				date: today,
 				time: nowTime(),
-				notes: ''
+				notes: '',
+				swimStyle: 'unspecified',
+				poolSize: 25
 			};
 			state.showForm = false;
 			state.errorMessage = '';
@@ -127,12 +135,23 @@
 		return `${mins}m`;
 	}
 
-	function calculatePace(meters: number, minutes: number): string {
+	function calcPace100m(meters: number, minutes: number): string {
+		if (meters === 0 || minutes === 0) return '—';
+		return `${(minutes / (meters / 100)).toFixed(1)} min/100m`;
+	}
+
+	function calcCalories(minutes: number): number {
+		return Math.round(minutes * 8);
+	}
+
+	function calcSpeed(meters: number, minutes: number): string {
 		if (minutes === 0) return '—';
-		const pacePerKm = (minutes * 1000) / meters;
-		const paceMinutes = Math.floor(pacePerKm);
-		const paceSeconds = Math.round((pacePerKm - paceMinutes) * 60);
-		return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}/km`;
+		return `${(meters / (minutes * 60)).toFixed(2)} m/s`;
+	}
+
+	function formatStyleLabel(style: string): string {
+		if (!style || style === 'unspecified') return 'Mixed';
+		return style.charAt(0).toUpperCase() + style.slice(1);
 	}
 
 	let visibleActivities = $derived(
@@ -144,13 +163,19 @@
 		})
 	);
 
-	function getTotalStats() {
-		return {
-			distance: visibleActivities.reduce((sum, a) => sum + (a.distance || 0), 0),
-			duration: visibleActivities.reduce((sum, a) => sum + (a.duration || 0), 0),
-			activities: visibleActivities.length
-		};
-	}
+	let totalStats = $derived.by(() => {
+		const distance = visibleActivities.reduce((sum, a) => sum + (a.distance || 0), 0);
+		const duration = visibleActivities.reduce((sum, a) => sum + (a.duration || 0), 0);
+		const calories = visibleActivities.reduce(
+			(sum, a) => sum + calcCalories(a.duration || 0),
+			0
+		);
+		const avgPace =
+			distance > 0 && duration > 0
+				? `${(duration / (distance / 100)).toFixed(1)} min/100m`
+				: '—';
+		return { distance, duration, activities: visibleActivities.length, calories, avgPace };
+	});
 </script>
 
 <div class="p-4 md:p-6">
@@ -174,19 +199,28 @@
 
 		<!-- Stats -->
 		{#if visibleActivities.length > 0}
-			{@const stats = getTotalStats()}
-			<div class="mb-6 grid grid-cols-3 gap-4">
+			<div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
 				<div class="rounded-2xl bg-white p-5 shadow-sm">
 					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Distance</p>
-					<p class="mt-2 text-2xl font-bold text-[#1F41BB]">{formatDistance(stats.distance)}</p>
+					<p class="mt-2 text-xl font-bold text-[#1F41BB]">{formatDistance(totalStats.distance)}</p>
 				</div>
 				<div class="rounded-2xl bg-white p-5 shadow-sm">
 					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Duration</p>
-					<p class="mt-2 text-2xl font-bold text-[#0ABFBC]">{formatDuration(stats.duration)}</p>
+					<p class="mt-2 text-xl font-bold text-[#0ABFBC]">{formatDuration(totalStats.duration)}</p>
 				</div>
 				<div class="rounded-2xl bg-white p-5 shadow-sm">
 					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Swims</p>
-					<p class="mt-2 text-2xl font-bold text-[#0D1B4B]">{stats.activities}</p>
+					<p class="mt-2 text-xl font-bold text-[#0D1B4B]">{totalStats.activities}</p>
+				</div>
+				<div class="rounded-2xl bg-white p-5 shadow-sm">
+					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Avg Pace</p>
+					<p class="mt-2 text-xl font-bold text-[#FF6B6B]">{totalStats.avgPace}</p>
+				</div>
+				<div class="rounded-2xl bg-white p-5 shadow-sm">
+					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Calories</p>
+					<p class="mt-2 text-xl font-bold text-[#2ECC71]">
+						{totalStats.calories.toLocaleString()} kcal
+					</p>
 				</div>
 			</div>
 		{/if}
@@ -257,6 +291,38 @@
 							/>
 						</div>
 					</div>
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label for="log-swim-style" class="block text-sm font-medium text-gray-700"
+								>Swim Style</label
+							>
+							<select
+								id="log-swim-style"
+								bind:value={state.newActivity.swimStyle}
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							>
+								<option value="freestyle">Freestyle</option>
+								<option value="breaststroke">Breaststroke</option>
+								<option value="backstroke">Backstroke</option>
+								<option value="butterfly">Butterfly</option>
+								<option value="unspecified">Unspecified</option>
+							</select>
+						</div>
+						<div>
+							<label for="log-pool-size" class="block text-sm font-medium text-gray-700"
+								>Pool Size</label
+							>
+							<select
+								id="log-pool-size"
+								bind:value={state.newActivity.poolSize}
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							>
+								<option value={25}>25 m</option>
+								<option value={50}>50 m</option>
+								<option value={100}>100 m</option>
+							</select>
+						</div>
+					</div>
 					<div>
 						<label for="log-notes" class="block text-sm font-medium text-gray-700"
 							>Notes (optional)</label
@@ -291,6 +357,7 @@
 			<div class="space-y-4">
 				{#each visibleActivities as activity}
 					<div class="rounded-2xl bg-white p-6 shadow-sm">
+						<!-- Header -->
 						<div class="mb-3 flex items-start justify-between">
 							<div>
 								<h3 class="text-lg font-bold text-[#0D1B4B]">
@@ -303,34 +370,54 @@
 									{formatDuration(activity.duration)}
 								</p>
 								<p class="text-sm text-gray-400">
-									Pace: {calculatePace(activity.distance, activity.duration)}
+									{calcPace100m(activity.distance, activity.duration)}
 								</p>
 							</div>
 						</div>
 
+						<!-- Badges -->
+						<div class="mb-3 flex flex-wrap gap-2">
+							<span
+								class="rounded-full bg-[#1F41BB]/10 px-3 py-1 text-xs font-medium text-[#1F41BB]"
+							>
+								🏊 {formatStyleLabel(activity.swimStyle)}
+							</span>
+							<span
+								class="rounded-full bg-[#0ABFBC]/10 px-3 py-1 text-xs font-medium text-[#0ABFBC]"
+							>
+								🏊‍♂️ {activity.poolSize || 25}m pool
+							</span>
+							<span
+								class="rounded-full bg-[#FF6B6B]/10 px-3 py-1 text-xs font-medium text-[#FF6B6B]"
+							>
+								🔥 {calcCalories(activity.duration)} kcal
+							</span>
+						</div>
+
 						{#if activity.notes}
-							<div class="mt-3 rounded-xl bg-[#F0F4FF] p-3">
+							<div class="mb-3 rounded-xl bg-[#F0F4FF] p-3">
 								<p class="text-sm text-gray-600">{activity.notes}</p>
 							</div>
 						{/if}
 
-						<div class="mt-4 grid grid-cols-3 gap-3 text-center">
+						<!-- Stats row -->
+						<div class="grid grid-cols-3 gap-3 text-center">
 							<div class="rounded-xl bg-[#F0F4FF] py-3">
-								<p class="text-xs text-gray-400">Avg Speed</p>
+								<p class="text-xs text-gray-400">⏱️ Pace</p>
 								<p class="text-sm font-semibold text-[#1F41BB]">
-									{((activity.distance / activity.duration) * 60).toFixed(0)} m/min
+									{calcPace100m(activity.distance, activity.duration)}
 								</p>
 							</div>
 							<div class="rounded-xl bg-[#F0F4FF] py-3">
-								<p class="text-xs text-gray-400">Efficiency</p>
+								<p class="text-xs text-gray-400">Speed</p>
 								<p class="text-sm font-semibold text-[#0ABFBC]">
-									{(activity.distance / Math.max(activity.duration, 1)).toFixed(1)} m/m
+									{calcSpeed(activity.distance, activity.duration)}
 								</p>
 							</div>
 							<div class="rounded-xl bg-[#F0F4FF] py-3">
-								<p class="text-xs text-gray-400">Distance/Hr</p>
-								<p class="text-sm font-semibold text-[#0D1B4B]">
-									{formatDistance((activity.distance / activity.duration) * 60)}
+								<p class="text-xs text-gray-400">🔥 Calories</p>
+								<p class="text-sm font-semibold text-[#FF6B6B]">
+									{calcCalories(activity.duration)} kcal
 								</p>
 							</div>
 						</div>

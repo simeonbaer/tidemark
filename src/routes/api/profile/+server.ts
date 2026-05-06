@@ -27,9 +27,49 @@ export const GET: RequestHandler = async ({ url }) => {
 		const totalDistance = activities.reduce((sum, a) => sum + (a.distance || 0), 0);
 		const totalDuration = activities.reduce((sum, a) => sum + (a.duration || 0), 0);
 
-		const battleCount = await battlesCollection.countDocuments({
-			$or: [{ creatorId: new ObjectId(userId) }, { opponentId: new ObjectId(userId) }]
-		});
+		// Battle stats
+		const allBattles = await battlesCollection
+			.find({
+				$or: [{ creatorId: new ObjectId(userId) }, { opponentId: new ObjectId(userId) }]
+			})
+			.toArray();
+
+		const completedBattles = allBattles.filter((b) => b.status === 'completed');
+		const battlesWon = completedBattles.filter((b) => b.winnerId?.toString() === userId).length;
+		const battlesLost = completedBattles.filter(
+			(b) => b.winnerId && b.winnerId.toString() !== userId
+		).length;
+		const totalDecided = battlesWon + battlesLost;
+		const winRate = totalDecided > 0 ? Math.round((battlesWon / totalDecided) * 100) : 0;
+
+		// Personal bests
+		const personalBestDistance =
+			activities.length > 0 ? Math.max(...activities.map((a) => a.distance || 0)) : 0;
+
+		const activitiesWithBoth = activities.filter(
+			(a) => (a.distance || 0) > 0 && (a.duration || 0) > 0
+		);
+		const personalBestPace =
+			activitiesWithBoth.length > 0
+				? Math.min(...activitiesWithBoth.map((a) => a.duration / (a.distance / 100)))
+				: 0;
+
+		// Monthly distances
+		const now = new Date();
+		const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+		const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+		const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+		const thisMonthDistance = activities
+			.filter((a) => new Date(a.date) >= thisMonthStart)
+			.reduce((sum, a) => sum + (a.distance || 0), 0);
+
+		const lastMonthDistance = activities
+			.filter((a) => {
+				const d = new Date(a.date);
+				return d >= lastMonthStart && d <= lastMonthEnd;
+			})
+			.reduce((sum, a) => sum + (a.distance || 0), 0);
 
 		return json({
 			_id: user._id.toString(),
@@ -41,7 +81,14 @@ export const GET: RequestHandler = async ({ url }) => {
 				totalDistance,
 				totalDuration,
 				totalSwims: activities.length,
-				battleCount
+				battleCount: allBattles.length,
+				battlesWon,
+				battlesLost,
+				winRate,
+				personalBestDistance,
+				personalBestPace,
+				thisMonthDistance,
+				lastMonthDistance
 			}
 		});
 	} catch (error) {

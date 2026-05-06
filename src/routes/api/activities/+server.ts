@@ -43,7 +43,9 @@ export const GET: RequestHandler = async ({ url }) => {
 				duration: a.duration || 0,
 				date: a.date,
 				notes: a.notes || '',
-				createdAt: a.createdAt
+				createdAt: a.createdAt,
+				swimStyle: a.swimStyle || 'unspecified',
+				poolSize: a.poolSize || 25
 			}))
 		);
 	} catch (error) {
@@ -54,7 +56,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
-		const { userId, distance, duration, date, notes } = await request.json();
+		const { userId, distance, duration, date, notes, swimStyle, poolSize } = await request.json();
 
 		if (!userId || distance === undefined || duration === undefined || !date) {
 			return json({ message: 'Missing required fields: userId, distance, duration, date' }, { status: 400 });
@@ -71,12 +73,17 @@ export const POST: RequestHandler = async ({ request }) => {
 		const { db } = await connectToDatabase();
 		const activitiesCollection = db.collection('activities');
 
+		const validStyles = ['freestyle', 'breaststroke', 'backstroke', 'butterfly', 'unspecified'];
+		const validPools = [25, 50, 100];
+
 		const result = await activitiesCollection.insertOne({
 			userId: new ObjectId(userId),
 			distance: Math.round(distance),
 			duration: Math.round(duration),
 			date: new Date(date),
 			notes: notes || '',
+			swimStyle: validStyles.includes(swimStyle) ? swimStyle : 'unspecified',
+			poolSize: validPools.includes(Number(poolSize)) ? Number(poolSize) : 25,
 			createdAt: new Date()
 		});
 
