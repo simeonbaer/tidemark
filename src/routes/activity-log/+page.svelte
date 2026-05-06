@@ -12,7 +12,8 @@
 		createdAt: string;
 	}
 
-	const today = new Date().toISOString().split('T')[0];
+	const now = new Date();
+	const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
 	let state = $state({
 		activities: [] as Activity[],
@@ -127,9 +128,13 @@
 		return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}/km`;
 	}
 
-	// Only show activities with a date on or before today
 	let visibleActivities = $derived(
-		state.activities.filter((a) => new Date(a.date) <= new Date(today + 'T23:59:59'))
+		state.activities.filter((a) => {
+			const actDate = new Date(a.date);
+			const endOfToday = new Date();
+			endOfToday.setHours(23, 59, 59, 999);
+			return actDate <= endOfToday;
+		})
 	);
 
 	function getTotalStats() {
