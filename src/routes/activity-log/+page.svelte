@@ -15,6 +15,11 @@
 	const now = new Date();
 	const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
+	function nowTime(): string {
+		const d = new Date();
+		return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+	}
+
 	let state = $state({
 		activities: [] as Activity[],
 		loading: true,
@@ -25,6 +30,7 @@
 			distance: 0,
 			duration: 0,
 			date: today,
+			time: nowTime(),
 			notes: ''
 		},
 		showForm: false
@@ -70,7 +76,7 @@
 					userId: state.userId,
 					distance: state.newActivity.distance,
 					duration: state.newActivity.duration,
-					date: new Date(state.newActivity.date).toISOString(),
+					date: new Date(`${state.newActivity.date}T${state.newActivity.time}`).toISOString(),
 					notes: state.newActivity.notes
 				})
 			});
@@ -83,7 +89,8 @@
 			state.newActivity = {
 				distance: 0,
 				duration: 0,
-				date: new Date().toISOString().split('T')[0],
+				date: today,
+				time: nowTime(),
 				notes: ''
 			};
 			state.showForm = false;
@@ -229,15 +236,26 @@
 							/>
 						</div>
 					</div>
-					<div>
-						<label for="log-date" class="block text-sm font-medium text-gray-700">Date</label>
-						<input
-							id="log-date"
-							type="date"
-							bind:value={state.newActivity.date}
-							max={today}
-							class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
-						/>
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label for="log-date" class="block text-sm font-medium text-gray-700">Date</label>
+							<input
+								id="log-date"
+								type="date"
+								bind:value={state.newActivity.date}
+								max={today}
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							/>
+						</div>
+						<div>
+							<label for="log-time" class="block text-sm font-medium text-gray-700">Time</label>
+							<input
+								id="log-time"
+								type="time"
+								bind:value={state.newActivity.time}
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							/>
+						</div>
 					</div>
 					<div>
 						<label for="log-notes" class="block text-sm font-medium text-gray-700"
