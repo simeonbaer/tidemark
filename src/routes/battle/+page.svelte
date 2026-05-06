@@ -71,6 +71,7 @@
 	// Tracks which battle ID has already been queued for auto-complete (plain var, not reactive)
 	let autoCompletedBattleId = '';
 	let refreshInterval: ReturnType<typeof setInterval>;
+	let visibilityHandler: () => void;
 
 	onMount(async () => {
 		state.userId = localStorage.getItem('userId');
@@ -81,16 +82,25 @@
 		}
 		await Promise.all([loadUsers(), loadUserActivities()]);
 
-		// Auto-refresh battle data every 30 seconds
+		// Refresh when the user switches back to this tab
+		visibilityHandler = () => {
+			if (!document.hidden && state.activeBattle && state.selectedOpponent) {
+				refreshData();
+			}
+		};
+		document.addEventListener('visibilitychange', visibilityHandler);
+
+		// Auto-refresh battle data every 15 seconds
 		refreshInterval = setInterval(() => {
 			if (state.activeBattle && state.selectedOpponent) {
 				refreshData();
 			}
-		}, 30000);
+		}, 15000);
 	});
 
 	onDestroy(() => {
 		clearInterval(refreshInterval);
+		document.removeEventListener('visibilitychange', visibilityHandler);
 	});
 
 	// Auto-complete battle when winning condition is met
