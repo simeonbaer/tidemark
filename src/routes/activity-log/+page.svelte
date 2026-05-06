@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import Nav from '$lib/components/Nav.svelte';
 
 	interface Activity {
 		_id: string;
@@ -19,7 +18,6 @@
 		errorMessage: '',
 		successMessage: '',
 		userId: null as string | null,
-		userName: null as string | null,
 		newActivity: {
 			distance: 0,
 			duration: 0,
@@ -31,13 +29,10 @@
 
 	onMount(async () => {
 		state.userId = localStorage.getItem('userId');
-		state.userName = localStorage.getItem('userName');
-
 		if (!state.userId) {
 			await goto('/auth');
 			return;
 		}
-
 		loadActivities();
 	});
 
@@ -46,12 +41,10 @@
 			state.loading = true;
 			const response = await fetch(`/api/activities?userId=${state.userId}`);
 			const data = await response.json();
-
 			if (!response.ok) {
 				state.errorMessage = data.message || 'Failed to load activities';
 				return;
 			}
-
 			state.activities = data;
 		} catch (error) {
 			state.errorMessage = 'An error occurred while loading activities';
@@ -66,7 +59,6 @@
 			state.errorMessage = 'Please enter distance and duration';
 			return;
 		}
-
 		try {
 			const response = await fetch('/api/activities', {
 				method: 'POST',
@@ -79,15 +71,12 @@
 					notes: state.newActivity.notes
 				})
 			});
-
 			const data = await response.json();
-
 			if (!response.ok) {
 				state.errorMessage = data.message || 'Failed to add activity';
 				return;
 			}
-
-			state.successMessage = 'Activity logged successfully!';
+			state.successMessage = 'Activity logged!';
 			state.newActivity = {
 				distance: 0,
 				duration: 0,
@@ -97,7 +86,6 @@
 			state.showForm = false;
 			state.errorMessage = '';
 			loadActivities();
-
 			setTimeout(() => {
 				state.successMessage = '';
 			}, 3000);
@@ -118,9 +106,7 @@
 	}
 
 	function formatDistance(meters: number): string {
-		if (meters >= 1000) {
-			return `${(meters / 1000).toFixed(2)} km`;
-		}
+		if (meters >= 1000) return `${(meters / 1000).toFixed(2)} km`;
 		return `${meters} m`;
 	}
 
@@ -139,7 +125,7 @@
 		return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}/km`;
 	}
 
-	function getTotalStats(): { distance: number; duration: number; activities: number } {
+	function getTotalStats() {
 		return {
 			distance: state.activities.reduce((sum, a) => sum + (a.distance || 0), 0),
 			duration: state.activities.reduce((sum, a) => sum + (a.duration || 0), 0),
@@ -148,51 +134,58 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-6 pb-24 md:pb-6">
+<div class="p-4 md:p-6">
 	<div class="mx-auto max-w-4xl">
-		<Nav />
+		<!-- Page header -->
+		<div
+			class="mb-6 rounded-2xl bg-gradient-to-r from-[#0D1B4B] via-[#1F41BB] to-[#0ABFBC] p-6 shadow-lg"
+		>
+			<h1 class="text-2xl font-bold text-white">Activity Log</h1>
+			<p class="mt-1 text-sm text-white/60">Track and review all your swims</p>
+		</div>
 
 		{#if state.errorMessage}
-			<div class="mb-4 rounded-lg bg-red-100 p-4 text-red-700">{state.errorMessage}</div>
+			<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{state.errorMessage}</div>
 		{/if}
-
 		{#if state.successMessage}
-			<div class="mb-4 rounded-lg bg-green-100 p-4 text-green-700">{state.successMessage}</div>
+			<div class="mb-4 rounded-xl bg-green-50 p-4 text-sm text-green-700">
+				{state.successMessage}
+			</div>
 		{/if}
 
-		<!-- Statistics -->
+		<!-- Stats -->
 		{#if state.activities.length > 0}
 			{@const stats = getTotalStats()}
 			<div class="mb-6 grid grid-cols-3 gap-4">
-				<div class="rounded-lg bg-white p-6 shadow-lg">
-					<div class="text-sm text-gray-600">Total Distance</div>
-					<div class="mt-2 text-3xl font-bold text-[#1F41BB]">{formatDistance(stats.distance)}</div>
+				<div class="rounded-2xl bg-white p-5 shadow-sm">
+					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Distance</p>
+					<p class="mt-2 text-2xl font-bold text-[#1F41BB]">{formatDistance(stats.distance)}</p>
 				</div>
-				<div class="rounded-lg bg-white p-6 shadow-lg">
-					<div class="text-sm text-gray-600">Total Duration</div>
-					<div class="mt-2 text-3xl font-bold text-purple-600">{formatDuration(stats.duration)}</div>
+				<div class="rounded-2xl bg-white p-5 shadow-sm">
+					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Duration</p>
+					<p class="mt-2 text-2xl font-bold text-[#0ABFBC]">{formatDuration(stats.duration)}</p>
 				</div>
-				<div class="rounded-lg bg-white p-6 shadow-lg">
-					<div class="text-sm text-gray-600">Total Swims</div>
-					<div class="mt-2 text-3xl font-bold text-green-600">{stats.activities}</div>
+				<div class="rounded-2xl bg-white p-5 shadow-sm">
+					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Swims</p>
+					<p class="mt-2 text-2xl font-bold text-[#0D1B4B]">{stats.activities}</p>
 				</div>
 			</div>
 		{/if}
 
-		<!-- Add Activity Button -->
+		<!-- Log swim button -->
 		<div class="mb-6">
 			<button
 				onclick={() => (state.showForm = !state.showForm)}
-				class="rounded-lg bg-white px-6 py-3 font-semibold text-[#1F41BB] transition hover:bg-opacity-90"
+				class="rounded-xl bg-[#1F41BB] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#1a38a8]"
 			>
 				{state.showForm ? '✕ Cancel' : '+ Log Swim'}
 			</button>
 		</div>
 
-		<!-- Add Activity Form -->
+		<!-- Log swim form -->
 		{#if state.showForm}
-			<div class="mb-6 rounded-lg bg-white p-6 shadow-lg">
-				<h2 class="mb-4 text-xl font-bold text-gray-800">Log New Swim</h2>
+			<div class="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+				<h2 class="mb-5 text-lg font-bold text-[#0D1B4B]">Log New Swim</h2>
 				<div class="space-y-4">
 					<div class="grid grid-cols-2 gap-4">
 						<div>
@@ -206,7 +199,7 @@
 								min="0"
 								step="100"
 								placeholder="e.g., 1000"
-								class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
 							/>
 						</div>
 						<div>
@@ -220,7 +213,7 @@
 								min="0"
 								step="5"
 								placeholder="e.g., 30"
-								class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
 							/>
 						</div>
 					</div>
@@ -230,7 +223,7 @@
 							id="log-date"
 							type="date"
 							bind:value={state.newActivity.date}
-							class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
+							class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
 						/>
 					</div>
 					<div>
@@ -242,12 +235,12 @@
 							type="text"
 							bind:value={state.newActivity.notes}
 							placeholder="e.g., Morning swim, felt great"
-							class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
+							class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
 						/>
 					</div>
 					<button
 						onclick={submitActivity}
-						class="w-full rounded bg-[#1F41BB] py-2 font-semibold text-white transition hover:bg-[#1a38a8]"
+						class="w-full rounded-xl bg-[#1F41BB] py-3 text-sm font-semibold text-white transition hover:bg-[#1a38a8]"
 					>
 						Log Swim
 					</button>
@@ -255,54 +248,59 @@
 			</div>
 		{/if}
 
-		<!-- Activities List -->
+		<!-- Activities list -->
 		{#if state.loading}
-			<div class="text-center text-white">Loading activities...</div>
+			<p class="text-center text-sm text-gray-400">Loading activities…</p>
 		{:else if state.activities.length === 0}
-			<div class="rounded-lg bg-white p-8 text-center shadow-lg">
-				<p class="text-gray-600">No swims logged yet. Log your first swim to get started!</p>
+			<div class="rounded-2xl bg-white p-10 text-center shadow-sm">
+				<div class="mb-3 text-4xl">🏊</div>
+				<p class="text-gray-400">No swims logged yet. Log your first swim to get started!</p>
 			</div>
 		{:else}
 			<div class="space-y-4">
 				{#each state.activities as activity}
-					<div class="rounded-lg bg-white p-6 shadow-lg">
+					<div class="rounded-2xl bg-white p-6 shadow-sm">
 						<div class="mb-3 flex items-start justify-between">
 							<div>
-								<h3 class="text-lg font-bold text-gray-800">{formatDistance(activity.distance)}</h3>
-								<p class="text-sm text-gray-500">{formatDate(activity.date)}</p>
+								<h3 class="text-lg font-bold text-[#0D1B4B]">
+									{formatDistance(activity.distance)}
+								</h3>
+								<p class="text-sm text-gray-400">{formatDate(activity.date)}</p>
 							</div>
 							<div class="text-right">
-								<p class="text-lg font-semibold text-[#1F41BB]">{formatDuration(activity.duration)}</p>
-								<p class="text-sm text-gray-500">
+								<p class="text-lg font-semibold text-[#1F41BB]">
+									{formatDuration(activity.duration)}
+								</p>
+								<p class="text-sm text-gray-400">
 									Pace: {calculatePace(activity.distance, activity.duration)}
 								</p>
 							</div>
 						</div>
 
 						{#if activity.notes}
-							<div class="mt-3 rounded bg-gray-50 p-3">
-								<p class="text-sm text-gray-700">{activity.notes}</p>
+							<div class="mt-3 rounded-xl bg-[#F0F4FF] p-3">
+								<p class="text-sm text-gray-600">{activity.notes}</p>
 							</div>
 						{/if}
 
-						<div class="mt-3 grid grid-cols-3 gap-2 text-center">
-							<div class="rounded bg-blue-50 py-2">
-								<div class="text-xs text-gray-600">Avg Speed</div>
-								<div class="text-sm font-semibold text-[#1F41BB]">
+						<div class="mt-4 grid grid-cols-3 gap-3 text-center">
+							<div class="rounded-xl bg-[#F0F4FF] py-3">
+								<p class="text-xs text-gray-400">Avg Speed</p>
+								<p class="text-sm font-semibold text-[#1F41BB]">
 									{((activity.distance / activity.duration) * 60).toFixed(0)} m/min
-								</div>
+								</p>
 							</div>
-							<div class="rounded bg-purple-50 py-2">
-								<div class="text-xs text-gray-600">Efficiency</div>
-								<div class="text-sm font-semibold text-purple-600">
+							<div class="rounded-xl bg-[#F0F4FF] py-3">
+								<p class="text-xs text-gray-400">Efficiency</p>
+								<p class="text-sm font-semibold text-[#0ABFBC]">
 									{(activity.distance / Math.max(activity.duration, 1)).toFixed(1)} m/m
-								</div>
+								</p>
 							</div>
-							<div class="rounded bg-green-50 py-2">
-								<div class="text-xs text-gray-600">Distance/Hr</div>
-								<div class="text-sm font-semibold text-green-600">
+							<div class="rounded-xl bg-[#F0F4FF] py-3">
+								<p class="text-xs text-gray-400">Distance/Hr</p>
+								<p class="text-sm font-semibold text-[#0D1B4B]">
 									{formatDistance((activity.distance / activity.duration) * 60)}
-								</div>
+								</p>
 							</div>
 						</div>
 					</div>

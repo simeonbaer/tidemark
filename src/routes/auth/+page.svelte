@@ -20,24 +20,19 @@
 			state.errorMessage = 'Please fill in all fields';
 			return;
 		}
-
 		state.loading = true;
 		state.errorMessage = '';
-
 		try {
 			const response = await fetch('/api/users/login', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ email: state.loginEmail, password: state.loginPassword })
 			});
-
 			const data = await response.json();
-
 			if (!response.ok) {
 				state.errorMessage = data.message || 'Login failed';
 				return;
 			}
-
 			localStorage.setItem('userId', data.userId);
 			localStorage.setItem('userName', data.userName);
 			await goto('/battle');
@@ -59,20 +54,16 @@
 			state.errorMessage = 'Please fill in all fields';
 			return;
 		}
-
 		if (state.registerPassword !== state.registerConfirmPassword) {
 			state.errorMessage = 'Passwords do not match';
 			return;
 		}
-
 		if (state.registerPassword.length < 6) {
 			state.errorMessage = 'Password must be at least 6 characters';
 			return;
 		}
-
 		state.loading = true;
 		state.errorMessage = '';
-
 		try {
 			const response = await fetch('/api/users/register', {
 				method: 'POST',
@@ -84,14 +75,11 @@
 					skillLevel: state.registerSkillLevel
 				})
 			});
-
 			const data = await response.json();
-
 			if (!response.ok) {
 				state.errorMessage = data.message || 'Registration failed';
 				return;
 			}
-
 			state.successMessage = 'Registration successful! Please log in.';
 			state.activeTab = 'login';
 			state.registerUsername = '';
@@ -100,7 +88,6 @@
 			state.registerConfirmPassword = '';
 			state.loginEmail = '';
 			state.loginPassword = '';
-
 			setTimeout(() => {
 				state.successMessage = '';
 			}, 3000);
@@ -119,143 +106,218 @@
 	}
 </script>
 
-<div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
-	<div class="w-full max-w-md rounded-lg bg-white p-8 shadow-2xl">
-		<h1 class="mb-6 text-center text-3xl font-bold text-gray-800">Tidemark</h1>
-		<p class="mb-8 text-center text-gray-600">Swim Battle Rankings</p>
+<div class="flex min-h-screen">
+	<!-- Left panel: branding (desktop only) -->
+	<div
+		class="relative hidden overflow-hidden bg-gradient-to-br from-[#0D1B4B] via-[#1F41BB] to-[#0ABFBC] md:flex md:w-1/2 md:flex-col md:items-center md:justify-center"
+	>
+		<!-- Decorative blobs -->
+		<div class="absolute -left-16 -top-16 h-64 w-64 rounded-full bg-white/5"></div>
+		<div class="absolute -right-10 top-1/4 h-48 w-48 rounded-full bg-[#0ABFBC]/20 blur-2xl"></div>
+		<div class="absolute bottom-24 left-20 h-40 w-40 rounded-full bg-white/10 blur-xl"></div>
+		<div class="absolute right-24 top-16 h-24 w-24 rounded-full bg-[#0ABFBC]/30 blur-lg"></div>
 
-		<div class="mb-6 flex border-b-2 border-gray-200">
-			<button
-				onclick={() => switchTab('login')}
-				class={`flex-1 py-2 text-center font-semibold transition ${
-					state.activeTab === 'login'
-						? 'border-b-2 border-[#1F41BB] text-[#1F41BB]'
-						: 'text-gray-600 hover:text-gray-800'
-				}`}
-			>
-				Login
-			</button>
-			<button
-				onclick={() => switchTab('register')}
-				class={`flex-1 py-2 text-center font-semibold transition ${
-					state.activeTab === 'register'
-						? 'border-b-2 border-[#1F41BB] text-[#1F41BB]'
-						: 'text-gray-600 hover:text-gray-800'
-				}`}
-			>
-				Register
-			</button>
+		<!-- Branding content -->
+		<div class="relative z-10 px-12 text-center">
+			<div class="mb-6 text-8xl">🏊</div>
+			<h1 class="mb-3 text-6xl font-extrabold tracking-tight text-white">Tidemark</h1>
+			<p class="mb-6 text-lg font-semibold uppercase tracking-[0.3em] text-[#0ABFBC]">
+				Race the Tide
+			</p>
+			<p class="max-w-xs leading-relaxed text-white/60">
+				Challenge your friends. Track every metre. Conquer the distance.
+			</p>
+
+			<!-- Swimmer stats decorators -->
+			<div class="mt-12 flex justify-center gap-8">
+				<div class="text-center">
+					<div class="text-2xl font-bold text-white">🌊</div>
+					<div class="mt-1 text-xs text-white/50">Swim battles</div>
+				</div>
+				<div class="text-center">
+					<div class="text-2xl font-bold text-white">📊</div>
+					<div class="mt-1 text-xs text-white/50">Live progress</div>
+				</div>
+				<div class="text-center">
+					<div class="text-2xl font-bold text-white">🏆</div>
+					<div class="mt-1 text-xs text-white/50">Leaderboard</div>
+				</div>
+			</div>
 		</div>
 
-		{#if state.errorMessage}
-			<div class="mb-4 rounded bg-red-100 p-3 text-red-700">{state.errorMessage}</div>
-		{/if}
+		<!-- Wave decoration at bottom -->
+		<div class="absolute bottom-0 left-0 right-0">
+			<svg viewBox="0 0 1440 100" xmlns="http://www.w3.org/2000/svg" class="w-full">
+				<path
+					d="M0,50 C240,90 480,10 720,50 C960,90 1200,10 1440,50 L1440,100 L0,100 Z"
+					fill="rgba(255,255,255,0.05)"
+				/>
+				<path
+					d="M0,70 C360,30 720,90 1080,55 C1260,38 1360,75 1440,70 L1440,100 L0,100 Z"
+					fill="rgba(255,255,255,0.08)"
+				/>
+			</svg>
+		</div>
+	</div>
 
-		{#if state.successMessage}
-			<div class="mb-4 rounded bg-green-100 p-3 text-green-700">{state.successMessage}</div>
-		{/if}
+	<!-- Right panel: form -->
+	<div
+		class="flex w-full flex-col items-center justify-center bg-[#F0F4FF] px-6 py-12 md:w-1/2"
+	>
+		<!-- Mobile logo (small screens only) -->
+		<div class="mb-8 text-center md:hidden">
+			<span class="text-5xl">🏊</span>
+			<h1 class="mt-2 text-3xl font-extrabold text-[#0D1B4B]">Tidemark</h1>
+			<p class="mt-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#0ABFBC]">
+				Race the Tide
+			</p>
+		</div>
 
-		{#if state.activeTab === 'login'}
-			<div class="space-y-4">
-				<div>
-					<label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
-					<input
-						id="login-email"
-						type="email"
-						bind:value={state.loginEmail}
-						placeholder="Enter your email"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
-					/>
-				</div>
-				<div>
-					<label for="login-password" class="block text-sm font-medium text-gray-700"
-						>Password</label
+		<div class="w-full max-w-md">
+			<!-- Form card -->
+			<div class="rounded-2xl bg-white p-8 shadow-xl">
+				<!-- Tab switcher -->
+				<div class="mb-6 flex rounded-xl bg-[#F0F4FF] p-1">
+					<button
+						onclick={() => switchTab('login')}
+						class={`flex-1 rounded-lg py-2 text-sm font-semibold transition ${
+							state.activeTab === 'login'
+								? 'bg-[#1F41BB] text-white shadow-md'
+								: 'text-gray-500 hover:text-gray-700'
+						}`}
 					>
-					<input
-						id="login-password"
-						type="password"
-						bind:value={state.loginPassword}
-						placeholder="Enter your password"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
-					/>
+						Login
+					</button>
+					<button
+						onclick={() => switchTab('register')}
+						class={`flex-1 rounded-lg py-2 text-sm font-semibold transition ${
+							state.activeTab === 'register'
+								? 'bg-[#1F41BB] text-white shadow-md'
+								: 'text-gray-500 hover:text-gray-700'
+						}`}
+					>
+						Register
+					</button>
 				</div>
-				<button
-					onclick={handleLogin}
-					disabled={state.loading}
-					class="w-full rounded bg-[#1F41BB] py-2 font-semibold text-white transition hover:bg-[#1a38a8] disabled:bg-gray-400"
-				>
-					{state.loading ? 'Logging in...' : 'Login'}
-				</button>
+
+				{#if state.errorMessage}
+					<div class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+						{state.errorMessage}
+					</div>
+				{/if}
+				{#if state.successMessage}
+					<div class="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
+						{state.successMessage}
+					</div>
+				{/if}
+
+				{#if state.activeTab === 'login'}
+					<div class="space-y-4">
+						<div>
+							<label for="login-email" class="block text-sm font-medium text-[#0D1B4B]"
+								>Email</label
+							>
+							<input
+								id="login-email"
+								type="email"
+								bind:value={state.loginEmail}
+								placeholder="Enter your email"
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							/>
+						</div>
+						<div>
+							<label for="login-password" class="block text-sm font-medium text-[#0D1B4B]"
+								>Password</label
+							>
+							<input
+								id="login-password"
+								type="password"
+								bind:value={state.loginPassword}
+								placeholder="Enter your password"
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							/>
+						</div>
+						<button
+							onclick={handleLogin}
+							disabled={state.loading}
+							class="mt-2 w-full rounded-xl bg-[#1F41BB] py-3 text-sm font-semibold text-white transition hover:bg-[#1a38a8] disabled:bg-gray-300"
+						>
+							{state.loading ? 'Logging in…' : 'Login'}
+						</button>
+					</div>
+				{:else}
+					<div class="space-y-4">
+						<div>
+							<label for="reg-username" class="block text-sm font-medium text-[#0D1B4B]"
+								>Username</label
+							>
+							<input
+								id="reg-username"
+								type="text"
+								bind:value={state.registerUsername}
+								placeholder="Choose a username"
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							/>
+						</div>
+						<div>
+							<label for="reg-email" class="block text-sm font-medium text-[#0D1B4B]">Email</label>
+							<input
+								id="reg-email"
+								type="email"
+								bind:value={state.registerEmail}
+								placeholder="Enter your email"
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							/>
+						</div>
+						<div>
+							<label for="reg-password" class="block text-sm font-medium text-[#0D1B4B]"
+								>Password</label
+							>
+							<input
+								id="reg-password"
+								type="password"
+								bind:value={state.registerPassword}
+								placeholder="Min. 6 characters"
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							/>
+						</div>
+						<div>
+							<label for="reg-confirm" class="block text-sm font-medium text-[#0D1B4B]"
+								>Confirm Password</label
+							>
+							<input
+								id="reg-confirm"
+								type="password"
+								bind:value={state.registerConfirmPassword}
+								placeholder="Repeat your password"
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							/>
+						</div>
+						<div>
+							<label for="reg-skill" class="block text-sm font-medium text-[#0D1B4B]"
+								>Skill Level</label
+							>
+							<select
+								id="reg-skill"
+								bind:value={state.registerSkillLevel}
+								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							>
+								<option value="beginner">Beginner</option>
+								<option value="intermediate">Intermediate</option>
+								<option value="advanced">Advanced</option>
+								<option value="elite">Elite</option>
+							</select>
+						</div>
+						<button
+							onclick={handleRegister}
+							disabled={state.loading}
+							class="mt-2 w-full rounded-xl bg-[#1F41BB] py-3 text-sm font-semibold text-white transition hover:bg-[#1a38a8] disabled:bg-gray-300"
+						>
+							{state.loading ? 'Registering…' : 'Create Account'}
+						</button>
+					</div>
+				{/if}
 			</div>
-		{:else}
-			<div class="space-y-4">
-				<div>
-					<label for="reg-username" class="block text-sm font-medium text-gray-700"
-						>Username</label
-					>
-					<input
-						id="reg-username"
-						type="text"
-						bind:value={state.registerUsername}
-						placeholder="Choose a username"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
-					/>
-				</div>
-				<div>
-					<label for="reg-email" class="block text-sm font-medium text-gray-700">Email</label>
-					<input
-						id="reg-email"
-						type="email"
-						bind:value={state.registerEmail}
-						placeholder="Enter your email"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
-					/>
-				</div>
-				<div>
-					<label for="reg-password" class="block text-sm font-medium text-gray-700">Password</label>
-					<input
-						id="reg-password"
-						type="password"
-						bind:value={state.registerPassword}
-						placeholder="Enter your password (min. 6 characters)"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
-					/>
-				</div>
-				<div>
-					<label for="reg-confirm-password" class="block text-sm font-medium text-gray-700"
-						>Confirm Password</label
-					>
-					<input
-						id="reg-confirm-password"
-						type="password"
-						bind:value={state.registerConfirmPassword}
-						placeholder="Confirm your password"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
-					/>
-				</div>
-				<div>
-					<label for="reg-skill-level" class="block text-sm font-medium text-gray-700"
-						>Skill Level</label
-					>
-					<select
-						id="reg-skill-level"
-						bind:value={state.registerSkillLevel}
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
-					>
-						<option value="beginner">Beginner</option>
-						<option value="intermediate">Intermediate</option>
-						<option value="advanced">Advanced</option>
-						<option value="elite">Elite</option>
-					</select>
-				</div>
-				<button
-					onclick={handleRegister}
-					disabled={state.loading}
-					class="w-full rounded bg-[#1F41BB] py-2 font-semibold text-white transition hover:bg-[#1a38a8] disabled:bg-gray-400"
-				>
-					{state.loading ? 'Registering...' : 'Register'}
-				</button>
-			</div>
-		{/if}
+		</div>
 	</div>
 </div>
