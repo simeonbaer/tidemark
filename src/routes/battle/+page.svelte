@@ -226,6 +226,11 @@
 	let oppProgress = $derived(
 		state.activeBattle ? Math.min((oppDist / state.activeBattle.distanceGoal) * 100, 100) : 0
 	);
+	let allActivities = $derived(
+		state.opponentStats
+			? getAllActivitiesSorted(state.currentUserActivities, state.opponentStats.recentActivities)
+			: []
+	);
 </script>
 
 <div class="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-6 pb-24 md:pb-6">
@@ -379,10 +384,6 @@
 						<div class="rounded-lg bg-white p-6 shadow-lg">
 							<h2 class="mb-4 text-xl font-bold text-gray-800">Recent Activities</h2>
 							<div class="max-h-96 space-y-3 overflow-y-auto">
-								{@const allActivities = getAllActivitiesSorted(
-									state.currentUserActivities,
-									state.opponentStats.recentActivities
-								)}
 								{#if allActivities.length === 0}
 									<div class="text-center text-gray-500">No activities yet</div>
 								{:else}
