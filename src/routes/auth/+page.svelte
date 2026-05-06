@@ -50,7 +50,12 @@
 	}
 
 	async function handleRegister() {
-		if (!state.registerUsername || !state.registerEmail || !state.registerPassword || !state.registerConfirmPassword) {
+		if (
+			!state.registerUsername ||
+			!state.registerEmail ||
+			!state.registerPassword ||
+			!state.registerConfirmPassword
+		) {
 			state.errorMessage = 'Please fill in all fields';
 			return;
 		}
@@ -124,7 +129,7 @@
 				onclick={() => switchTab('login')}
 				class={`flex-1 py-2 text-center font-semibold transition ${
 					state.activeTab === 'login'
-						? 'border-b-2 border-blue-500 text-blue-500'
+						? 'border-b-2 border-[#1F41BB] text-[#1F41BB]'
 						: 'text-gray-600 hover:text-gray-800'
 				}`}
 			>
@@ -134,7 +139,7 @@
 				onclick={() => switchTab('register')}
 				class={`flex-1 py-2 text-center font-semibold transition ${
 					state.activeTab === 'register'
-						? 'border-b-2 border-blue-500 text-blue-500'
+						? 'border-b-2 border-[#1F41BB] text-[#1F41BB]'
 						: 'text-gray-600 hover:text-gray-800'
 				}`}
 			>
@@ -153,27 +158,31 @@
 		{#if state.activeTab === 'login'}
 			<div class="space-y-4">
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Email</label>
+					<label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
 					<input
+						id="login-email"
 						type="email"
 						bind:value={state.loginEmail}
 						placeholder="Enter your email"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 					/>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Password</label>
+					<label for="login-password" class="block text-sm font-medium text-gray-700"
+						>Password</label
+					>
 					<input
+						id="login-password"
 						type="password"
 						bind:value={state.loginPassword}
 						placeholder="Enter your password"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 					/>
 				</div>
 				<button
 					onclick={handleLogin}
 					disabled={state.loading}
-					class="w-full rounded bg-blue-500 py-2 font-semibold text-white transition hover:bg-blue-600 disabled:bg-gray-400"
+					class="w-full rounded bg-[#1F41BB] py-2 font-semibold text-white transition hover:bg-[#1a38a8] disabled:bg-gray-400"
 				>
 					{state.loading ? 'Logging in...' : 'Login'}
 				</button>
@@ -181,46 +190,57 @@
 		{:else}
 			<div class="space-y-4">
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Username</label>
+					<label for="reg-username" class="block text-sm font-medium text-gray-700"
+						>Username</label
+					>
 					<input
+						id="reg-username"
 						type="text"
 						bind:value={state.registerUsername}
 						placeholder="Choose a username"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 					/>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Email</label>
+					<label for="reg-email" class="block text-sm font-medium text-gray-700">Email</label>
 					<input
+						id="reg-email"
 						type="email"
 						bind:value={state.registerEmail}
 						placeholder="Enter your email"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 					/>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Password</label>
+					<label for="reg-password" class="block text-sm font-medium text-gray-700">Password</label>
 					<input
+						id="reg-password"
 						type="password"
 						bind:value={state.registerPassword}
 						placeholder="Enter your password (min. 6 characters)"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 					/>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Confirm Password</label>
+					<label for="reg-confirm-password" class="block text-sm font-medium text-gray-700"
+						>Confirm Password</label
+					>
 					<input
+						id="reg-confirm-password"
 						type="password"
 						bind:value={state.registerConfirmPassword}
 						placeholder="Confirm your password"
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 					/>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-gray-700">Skill Level</label>
+					<label for="reg-skill-level" class="block text-sm font-medium text-gray-700"
+						>Skill Level</label
+					>
 					<select
+						id="reg-skill-level"
 						bind:value={state.registerSkillLevel}
-						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+						class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 					>
 						<option value="beginner">Beginner</option>
 						<option value="intermediate">Intermediate</option>
@@ -231,7 +251,7 @@
 				<button
 					onclick={handleRegister}
 					disabled={state.loading}
-					class="w-full rounded bg-purple-500 py-2 font-semibold text-white transition hover:bg-purple-600 disabled:bg-gray-400"
+					class="w-full rounded bg-[#1F41BB] py-2 font-semibold text-white transition hover:bg-[#1a38a8] disabled:bg-gray-400"
 				>
 					{state.loading ? 'Registering...' : 'Register'}
 				</button>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import Nav from '$lib/components/Nav.svelte';
 
 	interface Activity {
 		_id: string;
@@ -106,12 +107,6 @@
 		}
 	}
 
-	function handleLogout() {
-		localStorage.removeItem('userId');
-		localStorage.removeItem('userName');
-		goto('/auth');
-	}
-
 	function formatDate(dateString: string) {
 		return new Date(dateString).toLocaleDateString('en-US', {
 			year: 'numeric',
@@ -132,9 +127,7 @@
 	function formatDuration(minutes: number): string {
 		const hours = Math.floor(minutes / 60);
 		const mins = minutes % 60;
-		if (hours > 0) {
-			return `${hours}h ${mins}m`;
-		}
+		if (hours > 0) return `${hours}h ${mins}m`;
 		return `${mins}m`;
 	}
 
@@ -155,34 +148,9 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-6">
+<div class="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-6 pb-24 md:pb-6">
 	<div class="mx-auto max-w-4xl">
-		<!-- Header -->
-		<div class="mb-8 flex items-center justify-between">
-			<h1 class="text-3xl font-bold text-white">Tidemark</h1>
-			<div class="flex items-center gap-4">
-				<span class="text-white">{state.userName}</span>
-				<button
-					onclick={handleLogout}
-					class="rounded bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
-				>
-					Logout
-				</button>
-			</div>
-		</div>
-
-		<!-- Navigation -->
-		<div class="mb-8 flex gap-4">
-			<a href="/battle" class="rounded-lg bg-white bg-opacity-30 px-6 py-2 font-semibold text-white transition hover:bg-opacity-50">
-				Battle
-			</a>
-			<a href="/activity-log" class="rounded-lg bg-white px-6 py-2 font-semibold text-blue-600">
-				Activity Log
-			</a>
-			<a href="/calendar" class="rounded-lg bg-white bg-opacity-30 px-6 py-2 font-semibold text-white transition hover:bg-opacity-50">
-				Calendar
-			</a>
-		</div>
+		<Nav />
 
 		{#if state.errorMessage}
 			<div class="mb-4 rounded-lg bg-red-100 p-4 text-red-700">{state.errorMessage}</div>
@@ -198,7 +166,7 @@
 			<div class="mb-6 grid grid-cols-3 gap-4">
 				<div class="rounded-lg bg-white p-6 shadow-lg">
 					<div class="text-sm text-gray-600">Total Distance</div>
-					<div class="mt-2 text-3xl font-bold text-blue-600">{formatDistance(stats.distance)}</div>
+					<div class="mt-2 text-3xl font-bold text-[#1F41BB]">{formatDistance(stats.distance)}</div>
 				</div>
 				<div class="rounded-lg bg-white p-6 shadow-lg">
 					<div class="text-sm text-gray-600">Total Duration</div>
@@ -215,7 +183,7 @@
 		<div class="mb-6">
 			<button
 				onclick={() => (state.showForm = !state.showForm)}
-				class="rounded-lg bg-white px-6 py-3 font-semibold text-blue-600 transition hover:bg-opacity-90"
+				class="rounded-lg bg-white px-6 py-3 font-semibold text-[#1F41BB] transition hover:bg-opacity-90"
 			>
 				{state.showForm ? '✕ Cancel' : '+ Log Swim'}
 			</button>
@@ -228,48 +196,58 @@
 				<div class="space-y-4">
 					<div class="grid grid-cols-2 gap-4">
 						<div>
-							<label class="block text-sm font-medium text-gray-700">Distance (meters)</label>
+							<label for="log-distance" class="block text-sm font-medium text-gray-700"
+								>Distance (meters)</label
+							>
 							<input
+								id="log-distance"
 								type="number"
 								bind:value={state.newActivity.distance}
 								min="0"
 								step="100"
 								placeholder="e.g., 1000"
-								class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+								class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 							/>
 						</div>
 						<div>
-							<label class="block text-sm font-medium text-gray-700">Duration (minutes)</label>
+							<label for="log-duration" class="block text-sm font-medium text-gray-700"
+								>Duration (minutes)</label
+							>
 							<input
+								id="log-duration"
 								type="number"
 								bind:value={state.newActivity.duration}
 								min="0"
 								step="5"
 								placeholder="e.g., 30"
-								class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+								class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 							/>
 						</div>
 					</div>
 					<div>
-						<label class="block text-sm font-medium text-gray-700">Date</label>
+						<label for="log-date" class="block text-sm font-medium text-gray-700">Date</label>
 						<input
+							id="log-date"
 							type="date"
 							bind:value={state.newActivity.date}
-							class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+							class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 						/>
 					</div>
 					<div>
-						<label class="block text-sm font-medium text-gray-700">Notes (optional)</label>
+						<label for="log-notes" class="block text-sm font-medium text-gray-700"
+							>Notes (optional)</label
+						>
 						<input
+							id="log-notes"
 							type="text"
 							bind:value={state.newActivity.notes}
 							placeholder="e.g., Morning swim, felt great"
-							class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+							class="mt-1 w-full rounded border border-gray-300 px-4 py-2 focus:border-[#1F41BB] focus:outline-none"
 						/>
 					</div>
 					<button
 						onclick={submitActivity}
-						class="w-full rounded bg-blue-500 py-2 font-semibold text-white transition hover:bg-blue-600"
+						class="w-full rounded bg-[#1F41BB] py-2 font-semibold text-white transition hover:bg-[#1a38a8]"
 					>
 						Log Swim
 					</button>
@@ -294,8 +272,10 @@
 								<p class="text-sm text-gray-500">{formatDate(activity.date)}</p>
 							</div>
 							<div class="text-right">
-								<p class="text-lg font-semibold text-blue-600">{formatDuration(activity.duration)}</p>
-								<p class="text-sm text-gray-500">Pace: {calculatePace(activity.distance, activity.duration)}</p>
+								<p class="text-lg font-semibold text-[#1F41BB]">{formatDuration(activity.duration)}</p>
+								<p class="text-sm text-gray-500">
+									Pace: {calculatePace(activity.distance, activity.duration)}
+								</p>
 							</div>
 						</div>
 
@@ -305,19 +285,24 @@
 							</div>
 						{/if}
 
-						<!-- Swim Stats -->
 						<div class="mt-3 grid grid-cols-3 gap-2 text-center">
 							<div class="rounded bg-blue-50 py-2">
 								<div class="text-xs text-gray-600">Avg Speed</div>
-								<div class="text-sm font-semibold text-blue-600">{((activity.distance / activity.duration) * 60).toFixed(0)} m/min</div>
+								<div class="text-sm font-semibold text-[#1F41BB]">
+									{((activity.distance / activity.duration) * 60).toFixed(0)} m/min
+								</div>
 							</div>
 							<div class="rounded bg-purple-50 py-2">
 								<div class="text-xs text-gray-600">Efficiency</div>
-								<div class="text-sm font-semibold text-purple-600">{(activity.distance / Math.max(activity.duration, 1)).toFixed(1)} m/m</div>
+								<div class="text-sm font-semibold text-purple-600">
+									{(activity.distance / Math.max(activity.duration, 1)).toFixed(1)} m/m
+								</div>
 							</div>
 							<div class="rounded bg-green-50 py-2">
 								<div class="text-xs text-gray-600">Distance/Hr</div>
-								<div class="text-sm font-semibold text-green-600">{formatDistance((activity.distance / activity.duration) * 60)}</div>
+								<div class="text-sm font-semibold text-green-600">
+									{formatDistance((activity.distance / activity.duration) * 60)}
+								</div>
 							</div>
 						</div>
 					</div>

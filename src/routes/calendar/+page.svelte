@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import Nav from '$lib/components/Nav.svelte';
 
 	interface Activity {
 		_id: string;
@@ -95,12 +96,6 @@
 		state.selectedDayActivities = state.events.get(dateStr) || null;
 	}
 
-	function handleLogout() {
-		localStorage.removeItem('userId');
-		localStorage.removeItem('userName');
-		goto('/auth');
-	}
-
 	function formatDistance(meters: number): string {
 		if (meters >= 1000) {
 			return `${(meters / 1000).toFixed(2)} km`;
@@ -111,9 +106,7 @@
 	function formatDuration(minutes: number): string {
 		const hours = Math.floor(minutes / 60);
 		const mins = minutes % 60;
-		if (hours > 0) {
-			return `${hours}h ${mins}m`;
-		}
+		if (hours > 0) return `${hours}h ${mins}m`;
 		return `${mins}m`;
 	}
 
@@ -129,44 +122,17 @@
 	let firstDay = $derived(getFirstDayOfMonth(state.currentDate));
 	let days = $derived(Array.from({ length: daysInMonth }, (_, i) => i + 1));
 	let paddedDays = $derived(Array.from({ length: firstDay }, () => null).concat(days));
-	let dayTotal = $derived(state.selectedDayActivities?.activities.reduce((sum, a) => sum + a.distance, 0) ?? 0);
-	let dayDuration = $derived(state.selectedDayActivities?.activities.reduce((sum, a) => sum + a.duration, 0) ?? 0);
+	let dayTotal = $derived(
+		state.selectedDayActivities?.activities.reduce((sum, a) => sum + a.distance, 0) ?? 0
+	);
+	let dayDuration = $derived(
+		state.selectedDayActivities?.activities.reduce((sum, a) => sum + a.duration, 0) ?? 0
+	);
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-6">
+<div class="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-6 pb-24 md:pb-6">
 	<div class="mx-auto max-w-4xl">
-		<!-- Header -->
-		<div class="mb-8 flex items-center justify-between">
-			<h1 class="text-3xl font-bold text-white">Tidemark</h1>
-			<div class="flex items-center gap-4">
-				<span class="text-white">{state.userName}</span>
-				<button
-					onclick={handleLogout}
-					class="rounded bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
-				>
-					Logout
-				</button>
-			</div>
-		</div>
-
-		<!-- Navigation -->
-		<div class="mb-8 flex gap-4">
-			<a
-				href="/battle"
-				class="bg-opacity-30 hover:bg-opacity-50 rounded-lg bg-white px-6 py-2 font-semibold text-white transition"
-			>
-				Battle
-			</a>
-			<a
-				href="/activity-log"
-				class="bg-opacity-30 hover:bg-opacity-50 rounded-lg bg-white px-6 py-2 font-semibold text-white transition"
-			>
-				Activity Log
-			</a>
-			<a href="/calendar" class="rounded-lg bg-white px-6 py-2 font-semibold text-blue-600">
-				Calendar
-			</a>
-		</div>
+		<Nav />
 
 		<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 			<!-- Calendar -->
@@ -174,14 +140,14 @@
 				<div class="mb-6 flex items-center justify-between">
 					<button
 						onclick={previousMonth}
-						class="rounded bg-blue-500 px-4 py-2 text-white transition hover:bg-blue-600"
+						class="rounded bg-[#1F41BB] px-4 py-2 text-white transition hover:bg-[#1a38a8]"
 					>
 						← Previous
 					</button>
 					<h2 class="text-2xl font-bold text-gray-800">{monthName}</h2>
 					<button
 						onclick={nextMonth}
-						class="rounded bg-blue-500 px-4 py-2 text-white transition hover:bg-blue-600"
+						class="rounded bg-[#1F41BB] px-4 py-2 text-white transition hover:bg-[#1a38a8]"
 					>
 						Next →
 					</button>
@@ -191,12 +157,10 @@
 					<div class="text-center text-gray-600">Loading calendar...</div>
 				{:else}
 					<div class="grid grid-cols-7 gap-2">
-						<!-- Day headers -->
 						{#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as day}
 							<div class="text-center font-bold text-gray-700">{day}</div>
 						{/each}
 
-						<!-- Days -->
 						{#each paddedDays as day}
 							{#if day === null}
 								<div class="rounded bg-gray-100 p-3"></div>
@@ -208,9 +172,7 @@
 								<button
 									onclick={() => selectDay(dateStr)}
 									class={`min-h-20 rounded p-2 text-center transition ${
-										isSelected
-											? 'ring-2 ring-blue-500'
-											: ''
+										isSelected ? 'ring-2 ring-[#1F41BB]' : ''
 									} ${
 										dayData
 											? 'bg-gradient-to-br from-blue-400 to-purple-500 text-white'
@@ -219,8 +181,13 @@
 								>
 									<div class="font-semibold">{day}</div>
 									{#if dayData}
-										<div class="mt-1 text-xs font-semibold">{dayData.count} {dayData.count === 1 ? 'swim' : 'swims'}</div>
-										<div class="mt-1 text-xs">{formatDistance(dayData.activities.reduce((sum, a) => sum + a.distance, 0))}</div>
+										<div class="mt-1 text-xs font-semibold">
+											{dayData.count}
+											{dayData.count === 1 ? 'swim' : 'swims'}
+										</div>
+										<div class="mt-1 text-xs">
+											{formatDistance(dayData.activities.reduce((sum, a) => sum + a.distance, 0))}
+										</div>
 									{/if}
 								</button>
 							{/if}
@@ -229,7 +196,8 @@
 
 					<div class="mt-6 space-y-2">
 						<p class="text-sm text-gray-600">
-							<span class="inline-block h-3 w-3 rounded bg-gradient-to-br from-blue-400 to-purple-500"></span>
+							<span class="inline-block h-3 w-3 rounded bg-gradient-to-br from-blue-400 to-purple-500"
+							></span>
 							Days with activities
 						</p>
 					</div>
@@ -247,23 +215,23 @@
 								<div class="rounded-lg bg-blue-50 p-4">
 									<div class="flex items-start justify-between">
 										<div>
-											<div class="font-semibold text-gray-800">{formatDistance(activity.distance)}</div>
+											<div class="font-semibold text-gray-800">
+												{formatDistance(activity.distance)}
+											</div>
 											<div class="text-sm text-gray-600">{formatDuration(activity.duration)}</div>
 										</div>
 										<div class="text-right text-xs text-gray-500">
-											Pace:
-											<br />
+											Pace:<br />
 											{((activity.distance / activity.duration) * 60).toFixed(0)} m/min
 										</div>
 									</div>
 									{#if activity.notes}
-										<div class="mt-2 text-xs text-gray-600 italic">{activity.notes}</div>
+										<div class="mt-2 text-xs italic text-gray-600">{activity.notes}</div>
 									{/if}
 								</div>
 							{/each}
 						</div>
 
-						<!-- Day Summary -->
 						<div class="mt-4 space-y-2 border-t pt-4">
 							<div class="flex justify-between">
 								<span class="text-sm text-gray-600">Day Total:</span>
