@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 
 	interface User {
@@ -31,13 +31,21 @@
 
 	interface OpponentStats {
 		opponent: User;
-		stats: {
-			totalDistance: number;
-			totalDuration: number;
-			activityCount: number;
-		};
+		stats: { totalDistance: number; totalDuration: number; activityCount: number };
 		recentActivities: Activity[];
 		activeBattle: Battle | null;
+	}
+
+	interface CompletedBattle {
+		_id: string;
+		distanceGoal: number;
+		bet: string;
+		createdAt: string;
+		completedAt: string | null;
+		winnerId: string | null;
+		yourDistance: number;
+		opponentDistance: number;
+		opponent: { _id: string; username: string; profilePicture: string | null } | null;
 	}
 
 	let state = $state({
@@ -48,12 +56,21 @@
 		opponentStats: null as OpponentStats | null,
 		activeBattle: null as Battle | null,
 		currentUserActivities: [] as Activity[],
+		battleHistory: [] as CompletedBattle[],
 		newBattle: { distanceGoalMeters: 0, bet: '' },
 		loading: false,
 		loadingOpponent: false,
+		loadingHistory: false,
+		refreshing: false,
+		showEndConfirm: false,
+		autoCompleteCountdown: 0,
 		errorMessage: '',
 		successMessage: ''
 	});
+
+	// Tracks which battle ID has already been queued for auto-complete (plain var, not reactive)
+	let autoCompletedBattleId = '';
+	let refreshInterval: ReturnType<typeof setInterval>;
 
 	onMount(async () => {
 		state.userId = localStorage.getItem('userId');
@@ -62,9 +79,41 @@
 			await goto('/auth');
 			return;
 		}
-		loadUsers();
-		loadUserActivities();
+		await Promise.all([loadUsers(), loadUserActivities()]);
+
+		// Auto-refresh battle data every 30 seconds
+		refreshInterval = setInterval(() => {
+			if (state.activeBattle && state.selectedOpponent) {
+				refreshData();
+			}
+		}, 30000);
 	});
+
+	onDestroy(() => {
+		clearInterval(refreshInterval);
+	});
+
+	// Auto-complete battle when winning condition is met
+	$effect(() => {
+		const w = winner;
+		const b = state.activeBattle;
+		if (w && b && autoCompletedBattleId !== b._id) {
+			autoCompletedBattleId = b._id;
+			state.autoCompleteCountdown = 5;
+
+			const tick = setInterval(() => {
+				state.autoCompleteCountdown--;
+				if (state.autoCompleteCountdown <= 0) {
+					clearInterval(tick);
+					autoCompleteBattle(b._id, w);
+				}
+			}, 1000);
+
+			return () => clearInterval(tick);
+		}
+	});
+
+	// ── Data loaders ────────────────────────────────────────────────────────────
 
 	async function loadUsers() {
 		try {
@@ -99,7 +148,11 @@
 		state.selectedOpponent = opponent;
 		state.activeBattle = null;
 		state.opponentStats = null;
+		state.battleHistory = [];
 		state.errorMessage = '';
+		state.showEndConfirm = false;
+		autoCompletedBattleId = '';
+
 		try {
 			state.loadingOpponent = true;
 			const response = await fetch(
@@ -118,7 +171,50 @@
 		} finally {
 			state.loadingOpponent = false;
 		}
+
+		// Load history (for the no-active-battle view or after transitions)
+		loadBattleHistory(opponent._id);
 	}
+
+	async function loadBattleHistory(opponentId: string) {
+		try {
+			state.loadingHistory = true;
+			const response = await fetch(
+				`/api/battles/history?userId=${state.userId}&opponentId=${opponentId}`
+			);
+			const data = await response.json();
+			if (!response.ok) return;
+			state.battleHistory = data;
+		} catch (error) {
+			console.error('Error loading battle history:', error);
+		} finally {
+			state.loadingHistory = false;
+		}
+	}
+
+	async function refreshData() {
+		if (!state.selectedOpponent) return;
+		try {
+			state.refreshing = true;
+			await Promise.all([
+				loadUserActivities(),
+				(async () => {
+					const response = await fetch(
+						`/api/battles?opponentId=${state.selectedOpponent!._id}&userId=${state.userId}`
+					);
+					const data = await response.json();
+					if (response.ok) {
+						state.opponentStats = data;
+						state.activeBattle = data.activeBattle || null;
+					}
+				})()
+			]);
+		} finally {
+			state.refreshing = false;
+		}
+	}
+
+	// ── Battle actions ───────────────────────────────────────────────────────────
 
 	async function createBattle() {
 		if (!state.newBattle.distanceGoalMeters || state.newBattle.distanceGoalMeters <= 0) {
@@ -143,6 +239,8 @@
 				return;
 			}
 			state.activeBattle = data;
+			state.battleHistory = [];
+			autoCompletedBattleId = '';
 			state.successMessage = 'Battle created!';
 			setTimeout(() => (state.successMessage = ''), 3000);
 		} catch (error) {
@@ -153,16 +251,63 @@
 		}
 	}
 
+	async function endBattle() {
+		if (!state.activeBattle) return;
+		try {
+			const response = await fetch('/api/battles', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ battleId: state.activeBattle._id, status: 'completed' })
+			});
+			if (!response.ok) {
+				const data = await response.json();
+				state.errorMessage = data.message || 'Failed to end battle';
+				return;
+			}
+			state.activeBattle = null;
+			state.showEndConfirm = false;
+			autoCompletedBattleId = '';
+			state.successMessage = 'Battle ended.';
+			setTimeout(() => (state.successMessage = ''), 3000);
+			if (state.selectedOpponent) loadBattleHistory(state.selectedOpponent._id);
+		} catch (error) {
+			state.errorMessage = 'An error occurred';
+			console.error(error);
+		}
+	}
+
+	async function autoCompleteBattle(battleId: string, winnerName: string) {
+		const winnerId =
+			winnerName === state.userName ? state.userId : state.selectedOpponent?._id;
+		try {
+			await fetch('/api/battles', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					battleId,
+					status: 'completed',
+					winnerId: winnerId || undefined
+				})
+			});
+		} catch (error) {
+			console.error('Error auto-completing battle:', error);
+		}
+		state.activeBattle = null;
+		state.autoCompleteCountdown = 0;
+		if (state.selectedOpponent) loadBattleHistory(state.selectedOpponent._id);
+	}
+
+	// ── Formatting ───────────────────────────────────────────────────────────────
+
 	function formatDistance(meters: number): string {
 		if (meters >= 1000) return `${(meters / 1000).toFixed(2)} km`;
 		return `${Math.round(meters)} m`;
 	}
 
 	function formatDuration(minutes: number): string {
-		const hours = Math.floor(minutes / 60);
-		const mins = minutes % 60;
-		if (hours > 0) return `${hours}h ${mins}m`;
-		return `${mins}m`;
+		const h = Math.floor(minutes / 60);
+		const m = minutes % 60;
+		return h > 0 ? `${h}h ${m}m` : `${m}m`;
 	}
 
 	function formatDate(dateStr: string): string {
@@ -171,6 +316,14 @@
 			day: 'numeric',
 			hour: '2-digit',
 			minute: '2-digit'
+		});
+	}
+
+	function formatShortDate(dateStr: string): string {
+		return new Date(dateStr).toLocaleDateString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
 		});
 	}
 
@@ -192,7 +345,8 @@
 		return all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 	}
 
-	// Only count activities since the battle started
+	// ── Derived values ───────────────────────────────────────────────────────────
+
 	let yourDist = $derived.by(() => {
 		if (!state.activeBattle) return 0;
 		const battleStart = new Date(state.activeBattle.createdAt);
@@ -250,7 +404,7 @@
 		<div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
 			<!-- Opponent list -->
 			<div class="rounded-2xl bg-white p-6 shadow-sm lg:col-span-1">
-				<h2 class="mb-4 text-sm font-bold uppercase tracking-wide text-gray-400">
+				<h2 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
 					Select Opponent
 				</h2>
 
@@ -269,7 +423,6 @@
 										: 'bg-[#F0F4FF] text-gray-700 hover:bg-blue-100'
 								}`}
 							>
-								<!-- Avatar -->
 								{#if user.profilePicture}
 									<img
 										src={user.profilePicture}
@@ -307,22 +460,60 @@
 					{#if state.activeBattle}
 						<!-- ── Active Battle View ── -->
 						<div class="rounded-2xl bg-white p-6 shadow-sm">
-							<!-- Battle header -->
-							<div class="mb-5 flex items-center justify-between">
+							<!-- Battle header with actions -->
+							<div class="mb-5 flex items-start justify-between gap-4">
 								<div>
 									<h2 class="text-lg font-bold text-[#0D1B4B]">
 										vs {state.selectedOpponent.username}
 									</h2>
 									<p class="text-sm text-gray-400">
-										Goal: {formatDistance(state.activeBattle.distanceGoal)} lead
+										Goal: {formatDistance(state.activeBattle.distanceGoal)} lead · from battle start
 									</p>
 								</div>
-								<span
-									class="rounded-full bg-[#2ECC71]/15 px-3 py-1 text-xs font-semibold text-[#2ECC71]"
-								>
-									Active
-								</span>
+								<div class="flex shrink-0 items-center gap-2">
+									<!-- Refresh button -->
+									<button
+										onclick={refreshData}
+										disabled={state.refreshing}
+										class="rounded-xl bg-[#F0F4FF] px-3 py-2 text-xs font-medium text-[#1F41BB] transition hover:bg-blue-100 disabled:opacity-50"
+										title="Refresh battle data"
+									>
+										{state.refreshing ? '↻…' : '↻ Refresh'}
+									</button>
+									<!-- End battle button -->
+									{#if !state.showEndConfirm}
+										<button
+											onclick={() => (state.showEndConfirm = true)}
+											class="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-500 transition hover:bg-red-100"
+										>
+											End Battle
+										</button>
+									{/if}
+								</div>
 							</div>
+
+							<!-- End battle confirmation -->
+							{#if state.showEndConfirm}
+								<div
+									class="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4"
+								>
+									<p class="flex-1 text-sm font-medium text-red-800">
+										Are you sure you want to end this battle?
+									</p>
+									<button
+										onclick={endBattle}
+										class="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
+									>
+										Yes, end it
+									</button>
+									<button
+										onclick={() => (state.showEndConfirm = false)}
+										class="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+									>
+										Cancel
+									</button>
+								</div>
+							{/if}
 
 							<!-- Bet banner -->
 							{#if state.activeBattle.bet}
@@ -334,7 +525,7 @@
 								</div>
 							{/if}
 
-							<!-- Winner banner -->
+							<!-- Winner banner + countdown -->
 							{#if winner}
 								<div
 									class="mb-6 rounded-2xl bg-gradient-to-r from-yellow-400 to-[#FF6B6B] p-6 text-center shadow"
@@ -350,86 +541,84 @@
 											💰 {state.activeBattle.bet}
 										</div>
 									{/if}
+									{#if state.autoCompleteCountdown > 0}
+										<div class="mt-3 text-sm text-white/70">
+											Battle ends in {state.autoCompleteCountdown}s…
+										</div>
+									{/if}
 								</div>
 							{/if}
 
-							<!-- Progress bars (aquatic redesign) -->
-							<div class="space-y-5">
+							<!-- Progress bars -->
+							<div class="space-y-4">
 								<!-- Your bar -->
 								<div class="rounded-xl bg-[#F0F4FF] p-4">
-									<div class="mb-3 flex items-center gap-3">
-										{#if state.opponentStats}
-											<!-- user avatar placeholder (current user) -->
-											<div
-												class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1F41BB] text-sm font-bold text-white shadow"
-											>
-												{getInitial(state.userName || '')}
-											</div>
-										{/if}
-										<div class="flex-1 min-w-0">
-											<div class="flex items-baseline justify-between">
-												<span class="truncate text-sm font-bold text-[#0D1B4B]"
-													>{state.userName} <span class="text-xs font-normal text-gray-400"
-														>(You)</span
-													></span
-												>
+									<div class="flex items-center gap-3">
+										<div
+											class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1F41BB] text-sm font-bold text-white shadow"
+										>
+											{getInitial(state.userName || '')}
+										</div>
+										<div class="min-w-0 flex-1">
+											<div class="mb-1.5 flex items-baseline justify-between">
+												<span class="truncate text-sm font-bold text-[#0D1B4B]">
+													{state.userName}
+													<span class="text-xs font-normal text-gray-400">(You)</span>
+												</span>
 												<span class="ml-2 shrink-0 text-sm font-semibold text-[#1F41BB]">
 													{formatDistance(yourDist)}
 												</span>
 											</div>
-											<div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-white shadow-inner">
+											<div class="h-3 w-full overflow-hidden rounded-full bg-white shadow-inner">
 												<div
 													class="h-full rounded-full bg-[#1F41BB] transition-all duration-700"
 													style="width: {yourProgress}%;"
 												></div>
 											</div>
 										</div>
-										<span
-											class="w-10 shrink-0 text-right text-xs font-semibold text-[#1F41BB]"
-										>
+										<span class="w-9 shrink-0 text-right text-xs font-semibold text-[#1F41BB]">
 											{yourPct}%
 										</span>
 									</div>
 								</div>
 
-								<!-- Lead indicator -->
-								<div class="py-1 text-center text-sm">
+								<!-- Lead pill -->
+								<div class="text-center">
 									{#if lead > 0}
 										<span
-											class="inline-flex items-center gap-1.5 rounded-full bg-[#1F41BB]/10 px-4 py-1.5 text-sm font-semibold text-[#1F41BB]"
+											class="inline-flex items-center gap-1.5 rounded-full bg-[#1F41BB]/10 px-4 py-1.5 text-xs font-semibold text-[#1F41BB]"
 										>
 											🏄 You lead by {formatDistance(lead)}
 											{#if !winner}
-												<span class="font-normal text-[#1F41BB]/60"
+												<span class="font-normal opacity-60"
 													>· {formatDistance(state.activeBattle.distanceGoal - lead)} to win</span
 												>
 											{/if}
 										</span>
 									{:else if lead < 0}
 										<span
-											class="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B6B]/10 px-4 py-1.5 text-sm font-semibold text-[#FF6B6B]"
+											class="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B6B]/10 px-4 py-1.5 text-xs font-semibold text-[#FF6B6B]"
 										>
 											🏄 {state.selectedOpponent.username} leads by {formatDistance(Math.abs(lead))}
 											{#if !winner}
-												<span class="font-normal text-[#FF6B6B]/60"
-													>· {formatDistance(
+												<span class="font-normal opacity-60">
+													· {formatDistance(
 														state.activeBattle.distanceGoal - Math.abs(lead)
-													)} to win</span
-												>
+													)} to win
+												</span>
 											{/if}
 										</span>
 									{:else}
 										<span
-											class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-500"
+											class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-4 py-1.5 text-xs font-medium text-gray-500"
+											>⚖️ Tied</span
 										>
-											⚖️ Tied
-										</span>
 									{/if}
 								</div>
 
 								<!-- Opponent bar -->
 								<div class="rounded-xl bg-[#FFF5F5] p-4">
-									<div class="mb-3 flex items-center gap-3">
+									<div class="flex items-center gap-3">
 										{#if state.opponentStats.opponent.profilePicture}
 											<img
 												src={state.opponentStats.opponent.profilePicture}
@@ -443,39 +632,44 @@
 												{getInitial(state.selectedOpponent.username)}
 											</div>
 										{/if}
-										<div class="flex-1 min-w-0">
-											<div class="flex items-baseline justify-between">
-												<span class="truncate text-sm font-bold text-[#0D1B4B]"
-													>{state.selectedOpponent.username}</span
-												>
+										<div class="min-w-0 flex-1">
+											<div class="mb-1.5 flex items-baseline justify-between">
+												<span class="truncate text-sm font-bold text-[#0D1B4B]">
+													{state.selectedOpponent.username}
+												</span>
 												<span class="ml-2 shrink-0 text-sm font-semibold text-[#FF6B6B]">
 													{formatDistance(oppDist)}
 												</span>
 											</div>
-											<div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-white shadow-inner">
+											<div class="h-3 w-full overflow-hidden rounded-full bg-white shadow-inner">
 												<div
 													class="h-full rounded-full bg-[#FF6B6B] transition-all duration-700"
 													style="width: {oppProgress}%;"
 												></div>
 											</div>
 										</div>
-										<span class="w-10 shrink-0 text-right text-xs font-semibold text-[#FF6B6B]">
+										<span class="w-9 shrink-0 text-right text-xs font-semibold text-[#FF6B6B]">
 											{oppPct}%
 										</span>
 									</div>
 								</div>
 							</div>
 
-							<!-- Goal reminder -->
 							<p class="mt-4 text-center text-xs text-gray-400">
-								Goal: swim {formatDistance(state.activeBattle.distanceGoal)} more than your opponent
-								· Progress counts from battle start
+								Progress counts from battle start ·
+								<button
+									onclick={refreshData}
+									class="text-[#1F41BB] underline hover:no-underline"
+									disabled={state.refreshing}
+								>
+									{state.refreshing ? 'refreshing…' : 'refresh now'}
+								</button>
 							</p>
 						</div>
 
 						<!-- Recent activities -->
 						<div class="rounded-2xl bg-white p-6 shadow-sm">
-							<h2 class="mb-4 text-sm font-bold uppercase tracking-wide text-gray-400">
+							<h2 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
 								Recent Activities
 							</h2>
 							<div class="max-h-96 space-y-3 overflow-y-auto">
@@ -508,15 +702,14 @@
 							</div>
 						</div>
 					{:else}
-						<!-- ── Create Battle Form ── -->
+						<!-- ── No Active Battle ── -->
 						<div class="rounded-2xl bg-white p-6 shadow-sm">
 							<h2 class="mb-1 text-lg font-bold text-[#0D1B4B]">
 								Challenge {state.selectedOpponent.username}
 							</h2>
 							<p class="mb-6 text-sm text-gray-400">
-								First to lead by the goal distance wins. Progress only counts from battle start.
+								First to lead by the goal distance wins. Progress counts from battle start.
 							</p>
-
 							<div class="space-y-5">
 								<div>
 									<label for="battle-goal" class="block text-sm font-medium text-gray-700">
@@ -541,7 +734,6 @@
 										</p>
 									{/if}
 								</div>
-
 								<div>
 									<label for="battle-bet" class="block text-sm font-medium text-gray-700">
 										Bet (optional)
@@ -554,7 +746,6 @@
 										class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
 									/>
 								</div>
-
 								<button
 									onclick={createBattle}
 									disabled={state.loading}
@@ -565,7 +756,7 @@
 							</div>
 						</div>
 
-						<!-- Opponent stats preview -->
+						<!-- Opponent stats -->
 						<div class="rounded-2xl bg-white p-6 shadow-sm">
 							<div class="mb-4 flex items-center gap-3">
 								{#if state.opponentStats.opponent.profilePicture}
@@ -576,7 +767,7 @@
 									/>
 								{:else}
 									<div
-										class="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B6B] text-lg font-bold text-white ring-2 ring-[#FF6B6B]/40"
+										class="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B6B] text-lg font-bold text-white"
 									>
 										{getInitial(state.selectedOpponent.username)}
 									</div>
@@ -585,9 +776,7 @@
 									<h2 class="text-base font-bold text-[#0D1B4B]">
 										{state.selectedOpponent.username}
 									</h2>
-									<p class="text-xs capitalize text-gray-400">
-										{state.selectedOpponent.skillLevel}
-									</p>
+									<p class="text-xs capitalize text-gray-400">{state.selectedOpponent.skillLevel}</p>
 								</div>
 							</div>
 							<div class="grid grid-cols-3 gap-3">
@@ -611,6 +800,71 @@
 								</div>
 							</div>
 						</div>
+
+						<!-- Battle History -->
+						{#if state.loadingHistory}
+							<div class="rounded-2xl bg-white p-6 shadow-sm">
+								<p class="text-center text-sm text-gray-400">Loading history…</p>
+							</div>
+						{:else if state.battleHistory.length > 0}
+							<div class="rounded-2xl bg-white p-6 shadow-sm">
+								<h2 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
+									Battle History
+								</h2>
+								<div class="space-y-3">
+									{#each state.battleHistory as battle (battle._id)}
+										{@const youWon = battle.winnerId === state.userId}
+										{@const hasWinner = !!battle.winnerId}
+										<div
+											class={`rounded-xl p-4 text-sm ${
+												hasWinner
+													? youWon
+														? 'border border-[#2ECC71]/30 bg-green-50'
+														: 'border border-[#FF6B6B]/30 bg-red-50'
+													: 'bg-[#F0F4FF]'
+											}`}
+										>
+											<div class="mb-2 flex items-center justify-between">
+												<span class="font-semibold text-[#0D1B4B]">
+													{#if hasWinner}
+														{youWon ? '🏆 You Won' : '😔 You Lost'}
+													{:else}
+														⚔️ Ended
+													{/if}
+												</span>
+												{#if battle.completedAt}
+													<span class="text-xs text-gray-400"
+														>{formatShortDate(battle.completedAt)}</span
+													>
+												{/if}
+											</div>
+											<div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+												<div>
+													Goal: <span class="font-medium text-[#0D1B4B]"
+														>{formatDistance(battle.distanceGoal)} lead</span
+													>
+												</div>
+												{#if battle.bet}
+													<div>
+														Bet: <span class="font-medium text-yellow-700">{battle.bet}</span>
+													</div>
+												{/if}
+												<div>
+													You: <span class="font-medium text-[#1F41BB]"
+														>{formatDistance(battle.yourDistance)}</span
+													>
+												</div>
+												<div>
+													Them: <span class="font-medium text-[#FF6B6B]"
+														>{formatDistance(battle.opponentDistance)}</span
+													>
+												</div>
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
 					{/if}
 				{:else if !state.selectedOpponent}
 					<div class="rounded-2xl bg-white p-10 text-center shadow-sm">

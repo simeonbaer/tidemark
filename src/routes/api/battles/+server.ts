@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			return json({ message: 'Opponent not found' }, { status: 404 });
 		}
 
-		// Check for active battle first (if userId provided) so we can filter activities by battle start
+		// Fetch active battle first so we can filter activities by start date
 		let activeBattle = null;
 		if (userId) {
 			const battle = await battlesCollection.findOne({
@@ -45,7 +45,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			}
 		}
 
-		// Filter opponent activities: if there's an active battle, only count since battle started
+		// Only count opponent activities since battle start (if battle exists)
 		const activityQuery: Record<string, unknown> = { userId: new ObjectId(opponentId) };
 		if (activeBattle) {
 			activityQuery.date = { $gte: activeBattle.createdAt };
@@ -113,7 +113,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const battle = {
 			creatorId: new ObjectId(creatorId),
 			opponentId: new ObjectId(opponentId),
-			distanceGoal, // stored in meters
+			distanceGoal, // meters
 			bet: bet || '',
 			status: 'active',
 			createdAt: now
@@ -132,6 +132,37 @@ export const POST: RequestHandler = async ({ request }) => {
 		});
 	} catch (error) {
 		console.error('Error creating battle:', error);
+		return json({ message: 'Internal server error' }, { status: 500 });
+	}
+};
+
+export const PATCH: RequestHandler = async ({ request }) => {
+	try {
+		const { battleId, status, winnerId } = await request.json();
+
+		if (!battleId || !status) {
+			return json({ message: 'battleId and status are required' }, { status: 400 });
+		}
+
+		const { db } = await connectToDatabase();
+		const battlesCollection = db.collection('battles');
+
+		const updates: Record<string, unknown> = { status };
+		if (winnerId) updates.winnerId = new ObjectId(winnerId);
+		if (status === 'completed') updates.completedAt = new Date();
+
+		const result = await battlesCollection.updateOne(
+			{ _id: new ObjectId(battleId) },
+			{ $set: updates }
+		);
+
+		if (result.matchedCount === 0) {
+			return json({ message: 'Battle not found' }, { status: 404 });
+		}
+
+		return json({ message: 'Battle updated successfully' });
+	} catch (error) {
+		console.error('Error updating battle:', error);
 		return json({ message: 'Internal server error' }, { status: 500 });
 	}
 };
