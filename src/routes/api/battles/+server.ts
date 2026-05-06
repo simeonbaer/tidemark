@@ -54,7 +54,6 @@ export const GET: RequestHandler = async ({ url }) => {
 		const activities = await activitiesCollection
 			.find(activityQuery)
 			.sort({ date: -1 })
-			.limit(20)
 			.toArray();
 
 		const totalDistance = activities.reduce((sum, act) => sum + (act.distance || 0), 0);
@@ -68,7 +67,7 @@ export const GET: RequestHandler = async ({ url }) => {
 				profilePicture: opponent.profilePicture || null
 			},
 			stats: { totalDistance, totalDuration, activityCount: activities.length },
-			recentActivities: activities.map((a) => ({
+			recentActivities: activities.slice(0, 20).map((a) => ({
 				_id: a._id.toString(),
 				distance: a.distance || 0,
 				duration: a.duration || 0,
