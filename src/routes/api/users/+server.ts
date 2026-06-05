@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { connectToDatabase } from '$lib/server/db';
 import { ObjectId } from 'mongodb';
+import { getTopAchievementEmoji } from '$lib/server/achievements';
 
 export const GET: RequestHandler = async ({ url }) => {
 	try {
@@ -21,7 +22,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 		const users = await usersCollection
 			.find(query)
-			.project({ _id: 1, username: 1, skillLevel: 1, profilePicture: 1 })
+			.project({ _id: 1, username: 1, skillLevel: 1, profilePicture: 1, achievements: 1 })
 			.sort({ username: 1 })
 			.toArray();
 
@@ -30,7 +31,8 @@ export const GET: RequestHandler = async ({ url }) => {
 				_id: u._id.toString(),
 				username: u.username,
 				skillLevel: u.skillLevel,
-				profilePicture: u.profilePicture || null
+				profilePicture: u.profilePicture || null,
+				topAchievementEmoji: getTopAchievementEmoji(u.achievements || [])
 			}))
 		);
 	} catch (error) {

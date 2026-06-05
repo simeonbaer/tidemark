@@ -7,6 +7,7 @@
 		username: string;
 		skillLevel: string;
 		profilePicture: string | null;
+		topAchievementEmoji: string | null;
 	}
 
 	interface Activity {
@@ -62,6 +63,14 @@
 		createdAt: string;
 	}
 
+	interface LeaderboardEntry {
+		rank: number;
+		userId: string;
+		username: string;
+		profilePicture: string | null;
+		totalDistance: number;
+	}
+
 	let state = $state({
 		userId: null as string | null,
 		userName: null as string | null,
@@ -72,10 +81,12 @@
 		currentUserActivities: [] as Activity[],
 		battleHistory: [] as CompletedBattle[],
 		upcomingInvites: [] as Invite[],
+		leaderboard: [] as LeaderboardEntry[],
 		newBattle: { distanceGoalMeters: 0, bet: '' },
 		loading: false,
 		loadingOpponent: false,
 		loadingHistory: false,
+		loadingLeaderboard: true,
 		refreshing: false,
 		showEndConfirm: false,
 		autoCompleteCountdown: 0,
@@ -94,7 +105,7 @@
 			await goto('/auth');
 			return;
 		}
-		await Promise.all([loadUsers(), loadUserActivities()]);
+		await Promise.all([loadUsers(), loadUserActivities(), loadLeaderboard()]);
 
 		visibilityHandler = () => {
 			if (!document.hidden && state.activeBattle && state.selectedOpponent) {
@@ -162,6 +173,18 @@
 			state.currentUserActivities = data;
 		} catch (error) {
 			console.error('Error loading user activities:', error);
+		}
+	}
+
+	async function loadLeaderboard() {
+		try {
+			const response = await fetch('/api/leaderboard/monthly');
+			if (!response.ok) return;
+			state.leaderboard = await response.json();
+		} catch (error) {
+			console.error('Error loading leaderboard:', error);
+		} finally {
+			state.loadingLeaderboard = false;
 		}
 	}
 
@@ -444,6 +467,68 @@
 			<p class="mt-1 text-sm text-white/60">Challenge other swimmers to distance battles</p>
 		</div>
 
+		<!-- ── Monthly Leaderboard ── -->
+		{#if !state.loadingLeaderboard && state.leaderboard.length > 0}
+			<div class="mb-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
+				<div class="mb-4 flex items-center gap-2">
+					<span class="text-lg">🏆</span>
+					<h2 class="text-xs font-bold uppercase tracking-wide text-gray-400">
+						This Month's Top Swimmers
+					</h2>
+				</div>
+				<div class="space-y-2">
+					{#each state.leaderboard as entry (entry.userId)}
+						<div
+							class={`flex items-center gap-3 rounded-xl px-4 py-3 ${
+								entry.rank === 1
+									? 'bg-yellow-50 dark:bg-yellow-900/20'
+									: entry.rank === 2
+										? 'bg-gray-50 dark:bg-gray-700/40'
+										: entry.rank === 3
+											? 'bg-orange-50 dark:bg-orange-900/20'
+											: 'bg-[#F0F4FF] dark:bg-gray-700'
+							}`}
+						>
+							<!-- Medal / rank -->
+							<span class="w-6 shrink-0 text-center text-base">
+								{entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
+							</span>
+							<!-- Avatar -->
+							{#if entry.profilePicture}
+								<img
+									src={entry.profilePicture}
+									alt={entry.username}
+									class="h-8 w-8 shrink-0 rounded-full object-cover"
+								/>
+							{:else}
+								<div
+									class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0ABFBC]/20 text-sm font-bold text-[#0ABFBC]"
+								>
+									{getInitial(entry.username)}
+								</div>
+							{/if}
+							<span class="flex-1 text-sm font-semibold text-[#0D1B4B] dark:text-white">
+								{entry.username}
+							</span>
+							<span
+								class={`text-sm font-bold ${
+									entry.rank === 1
+										? 'text-yellow-600 dark:text-yellow-400'
+										: entry.rank === 2
+											? 'text-gray-500 dark:text-gray-300'
+											: entry.rank === 3
+												? 'text-orange-500 dark:text-orange-400'
+												: 'text-[#1F41BB]'
+								}`}
+							>
+								{formatDistance(entry.totalDistance)}
+							</span>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/if}
+
 		{#if state.errorMessage}
 			<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">{state.errorMessage}</div>
 		{/if}
@@ -494,7 +579,12 @@
 								{/if}
 								<div class="min-w-0">
 									<div class="truncate text-sm font-semibold">{user.username}</div>
-									<div class="text-xs capitalize opacity-60">{user.skillLevel}</div>
+									<div class="flex items-center gap-1 text-xs capitalize opacity-60">
+										{user.skillLevel}
+										{#if user.topAchievementEmoji}
+											<span class="opacity-100">{user.topAchievementEmoji}</span>
+										{/if}
+									</div>
 								</div>
 							</button>
 						{/each}
@@ -512,7 +602,6 @@
 					{#if state.activeBattle}
 						<!-- ── Active Battle View ── -->
 						<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
-							<!-- Battle header with actions -->
 							<div class="mb-5 flex items-start justify-between gap-4">
 								<div>
 									<h2 class="text-lg font-bold text-[#0D1B4B] dark:text-white">
@@ -829,6 +918,9 @@
 								<div>
 									<h2 class="text-base font-bold text-[#0D1B4B] dark:text-white">
 										{state.selectedOpponent.username}
+										{#if state.selectedOpponent.topAchievementEmoji}
+											<span class="ml-1">{state.selectedOpponent.topAchievementEmoji}</span>
+										{/if}
 									</h2>
 									<p class="text-xs capitalize text-gray-400">{state.selectedOpponent.skillLevel}</p>
 								</div>
