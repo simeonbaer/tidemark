@@ -119,30 +119,7 @@
 
 		<!-- Branding content -->
 		<div class="relative z-10 px-12 text-center">
-			<div class="mb-6 text-8xl">🏊</div>
-			<h1 class="mb-3 text-6xl font-extrabold tracking-tight text-white">Tidemark</h1>
-			<p class="mb-6 text-lg font-semibold uppercase tracking-[0.3em] text-[#0ABFBC]">
-				Race the Tide
-			</p>
-			<p class="max-w-xs leading-relaxed text-white/60">
-				Challenge your friends. Track every metre. Conquer the distance.
-			</p>
-
-			<!-- Swimmer stats decorators -->
-			<div class="mt-12 flex justify-center gap-8">
-				<div class="text-center">
-					<div class="text-2xl font-bold text-white">🌊</div>
-					<div class="mt-1 text-xs text-white/50">Swim battles</div>
-				</div>
-				<div class="text-center">
-					<div class="text-2xl font-bold text-white">📊</div>
-					<div class="mt-1 text-xs text-white/50">Live progress</div>
-				</div>
-				<div class="text-center">
-					<div class="text-2xl font-bold text-white">🏆</div>
-					<div class="mt-1 text-xs text-white/50">Leaderboard</div>
-				</div>
-			</div>
+			<img src="/logo.png" alt="Tidemark" class="mx-auto h-auto w-72 drop-shadow-xl" />
 		</div>
 
 		<!-- Wave decoration at bottom -->
@@ -165,12 +142,8 @@
 		class="flex w-full flex-col items-center justify-center bg-[#F0F4FF] px-6 py-12 md:w-1/2"
 	>
 		<!-- Mobile logo (small screens only) -->
-		<div class="mb-8 text-center md:hidden">
-			<span class="text-5xl">🏊</span>
-			<h1 class="mt-2 text-3xl font-extrabold text-[#0D1B4B]">Tidemark</h1>
-			<p class="mt-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#0ABFBC]">
-				Race the Tide
-			</p>
+		<div class="mb-8 md:hidden">
+			<img src="/logo.png" alt="Tidemark" class="mx-auto h-auto w-48 drop-shadow-lg" />
 		</div>
 
 		<div class="w-full max-w-md">
