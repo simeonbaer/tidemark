@@ -18,8 +18,8 @@
 	}
 
 	const navLinks = [
-		{ href: '/battle', label: 'Battle', icon: '⚔️' },
 		{ href: '/activity-log', label: 'Activity Log', icon: '📋' },
+		{ href: '/battle', label: 'Battle', icon: '⚔️' },
 		{ href: '/calendar', label: 'Calendar', icon: '📅' },
 		{ href: '/achievements', label: 'Achievements', icon: '🏆' },
 		{ href: '/profile', label: 'Profile', icon: '👤' }

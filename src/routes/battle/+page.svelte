@@ -74,6 +74,7 @@
 	let state = $state({
 		userId: null as string | null,
 		userName: null as string | null,
+		currentUserPicture: null as string | null,
 		users: [] as User[],
 		selectedOpponent: null as User | null,
 		opponentStats: null as OpponentStats | null,
@@ -105,7 +106,7 @@
 			await goto('/auth');
 			return;
 		}
-		await Promise.all([loadUsers(), loadUserActivities(), loadLeaderboard()]);
+		await Promise.all([loadUsers(), loadUserActivities(), loadLeaderboard(), loadCurrentUserPicture()]);
 
 		visibilityHandler = () => {
 			if (!document.hidden && state.activeBattle && state.selectedOpponent) {
@@ -146,6 +147,18 @@
 	});
 
 	// ── Data loaders ────────────────────────────────────────────────────────────
+
+	async function loadCurrentUserPicture() {
+		if (!state.userId) return;
+		try {
+			const res = await fetch(`/api/profile?userId=${state.userId}`);
+			if (!res.ok) return;
+			const data = await res.json();
+			state.currentUserPicture = data.profilePicture || null;
+		} catch (e) {
+			console.error('Error loading current user profile:', e);
+		}
+	}
 
 	async function loadUsers() {
 		try {
@@ -721,11 +734,19 @@
 												{formatDistance(yourDist)}
 											</div>
 										</div>
-										<div
-											class="flex h-9 w-9 items-center justify-center rounded-full bg-[#1F41BB] text-sm font-bold text-white shadow"
-										>
-											{getInitial(state.userName || '')}
-										</div>
+										{#if state.currentUserPicture}
+											<img
+												src={state.currentUserPicture}
+												alt="You"
+												class="h-9 w-9 rounded-full object-cover shadow"
+											/>
+										{:else}
+											<div
+												class="flex h-9 w-9 items-center justify-center rounded-full bg-[#1F41BB] text-sm font-bold text-white shadow"
+											>
+												{getInitial(state.userName || '')}
+											</div>
+										{/if}
 									</div>
 								</div>
 
