@@ -877,44 +877,7 @@
 				</div>
 			</div>
 
-			<!-- ── 7. Achievements Badges ── -->
-			<div class="mb-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
-				<div class="mb-4 flex items-center justify-between">
-					<h3 class="text-xs font-bold uppercase tracking-wide text-gray-400">Achievements</h3>
-					{#if achievementsState.achievements.length > 0}
-						<span class="text-xs text-gray-400">
-							{unlockedAchievements.length} / {achievementsState.achievements.length} unlocked
-						</span>
-					{/if}
-				</div>
-
-				{#if achievementsState.loading}
-					<p class="text-center text-sm text-gray-400">Loading achievements…</p>
-				{:else if achievementsState.achievements.length === 0}
-					<div class="flex h-24 items-center justify-center">
-						<p class="text-sm text-gray-400">No achievements yet — start swimming!</p>
-					</div>
-				{:else}
-					<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-						{#each achievementsState.achievements as ach}
-							<div
-								class={`rounded-xl p-4 text-center transition ${ach.unlocked ? 'bg-[#F0F4FF] dark:bg-gray-700' : 'bg-gray-50 opacity-50 dark:bg-gray-800/50'}`}
-							>
-								<div class="text-3xl">{ach.emoji}</div>
-								<p class="mt-2 text-xs font-semibold text-[#0D1B4B] dark:text-white">
-									{ach.name}
-								</p>
-								<p class="mt-0.5 text-[10px] text-gray-400">{ach.desc}</p>
-								{#if ach.unlocked}
-									<p class="mt-1 text-[9px] font-medium text-[#0ABFBC]">Unlocked ✓</p>
-								{/if}
-							</div>
-						{/each}
-					</div>
-				{/if}
-			</div>
-
-			<!-- ── 8. Edit Profile Form ── -->
+			<!-- ── 7. Edit Profile Form ── -->
 			<div id="edit-profile" class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 				<h3 class="mb-5 text-lg font-bold text-[#0D1B4B] dark:text-white">Edit Profile</h3>
 				<div class="space-y-4">
