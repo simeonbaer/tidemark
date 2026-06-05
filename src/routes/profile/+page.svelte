@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { darkMode } from '$lib/stores/theme';
+	import { pendingInviteCount } from '$lib/stores/inviteCount';
 
 	interface WeekStat {
 		weekStart: string;
@@ -39,6 +40,20 @@
 		};
 	}
 
+	interface Invite {
+		_id: string;
+		fromUserId: string;
+		fromUsername: string;
+		toUserId: string;
+		toUsername: string;
+		date: string;
+		time: string;
+		location: string;
+		message: string;
+		status: 'pending' | 'accepted' | 'declined';
+		createdAt: string;
+	}
+
 	let state = $state({
 		profile: null as ProfileData | null,
 		loading: true,
@@ -51,6 +66,11 @@
 		editSkillLevel: ''
 	});
 
+	let inviteState = $state({
+		invites: [] as Invite[],
+		loading: false
+	});
+
 	onMount(async () => {
 		state.userId = localStorage.getItem('userId');
 		if (!state.userId) {
@@ -58,6 +78,7 @@
 			return;
 		}
 		loadProfile();
+		loadInvites();
 	});
 
 	async function loadProfile() {
@@ -76,6 +97,45 @@
 			console.error(error);
 		} finally {
 			state.loading = false;
+		}
+	}
+
+	async function loadInvites() {
+		if (!state.userId) return;
+		inviteState.loading = true;
+		try {
+			const response = await fetch(`/api/invites?userId=${state.userId}`);
+			if (!response.ok) return;
+			const all: Invite[] = await response.json();
+			inviteState.invites = all;
+			const pending = all.filter(
+				(inv) => inv.toUserId === state.userId && inv.status === 'pending'
+			);
+			pendingInviteCount.set(pending.length);
+		} catch (error) {
+			console.error('Error loading invites:', error);
+		} finally {
+			inviteState.loading = false;
+		}
+	}
+
+	async function respondToInvite(inviteId: string, status: 'accepted' | 'declined') {
+		try {
+			const response = await fetch(`/api/invites/${inviteId}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ status })
+			});
+			if (!response.ok) return;
+			inviteState.invites = inviteState.invites.map((inv) =>
+				inv._id === inviteId ? { ...inv, status } : inv
+			);
+			const pending = inviteState.invites.filter(
+				(inv) => inv.toUserId === state.userId && inv.status === 'pending'
+			);
+			pendingInviteCount.set(pending.length);
+		} catch (error) {
+			console.error('Error responding to invite:', error);
 		}
 	}
 
@@ -184,6 +244,15 @@
 		return new Date(isoDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 	}
 
+	function formatInviteDate(dateStr: string): string {
+		return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', {
+			weekday: 'short',
+			month: 'long',
+			day: 'numeric',
+			year: 'numeric'
+		});
+	}
+
 	function monthImprovement(
 		thisMonth: number,
 		lastMonth: number
@@ -193,7 +262,6 @@
 		return { pct: Math.abs(raw), improved: raw >= 0 };
 	}
 
-	// Index of the best week by distance (for table highlight)
 	let bestWeekIdx = $derived.by(() => {
 		const weeks = state.profile?.stats.weeklyStats;
 		if (!weeks?.length) return -1;
@@ -207,6 +275,12 @@
 		});
 		return maxDist > 0 ? idx : -1;
 	});
+
+	let pendingReceivedInvites = $derived(
+		inviteState.invites.filter(
+			(inv) => inv.toUserId === state.userId && inv.status === 'pending'
+		)
+	);
 
 	const skillLevels = ['beginner', 'intermediate', 'advanced', 'elite'];
 </script>
@@ -463,7 +537,6 @@
 			<div class="mt-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 				<h3 class="mb-5 text-xs font-bold uppercase tracking-wide text-gray-400">Monthly Overview</h3>
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-					<!-- Distance this month vs last -->
 					<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
 						<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Distance This Month</p>
 						<p class="mt-2 text-2xl font-bold text-[#1F41BB]">
@@ -481,7 +554,6 @@
 						{/if}
 					</div>
 
-					<!-- Sessions this month vs last -->
 					<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
 						<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Sessions This Month</p>
 						<p class="mt-2 text-2xl font-bold text-[#0ABFBC]">
@@ -499,7 +571,6 @@
 						{/if}
 					</div>
 
-					<!-- Best pace this month -->
 					<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
 						<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Best Pace This Month</p>
 						<p class="mt-2 text-2xl font-bold text-[#FF6B6B]">
@@ -610,6 +681,61 @@
 								{/each}
 							</tbody>
 						</table>
+					</div>
+				{/if}
+			</div>
+
+			<!-- ── Swim Invitations ── -->
+			<div class="mt-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
+				<div class="mb-5 flex items-center justify-between">
+					<h3 class="text-xs font-bold uppercase tracking-wide text-gray-400">Swim Invitations</h3>
+					{#if pendingReceivedInvites.length > 0}
+						<span class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-600 dark:bg-red-900/30 dark:text-red-400">
+							{pendingReceivedInvites.length} pending
+						</span>
+					{/if}
+				</div>
+
+				{#if inviteState.loading}
+					<p class="text-center text-sm text-gray-400">Loading invitations…</p>
+				{:else if pendingReceivedInvites.length === 0}
+					<div class="flex h-24 flex-col items-center justify-center">
+						<p class="text-sm text-gray-400">No pending swim invitations</p>
+					</div>
+				{:else}
+					<div class="space-y-4">
+						{#each pendingReceivedInvites as invite (invite._id)}
+							<div class="rounded-xl border border-[#0ABFBC]/30 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-900/20">
+								<div class="flex flex-wrap items-start justify-between gap-3">
+									<div>
+										<p class="font-semibold text-[#0D1B4B] dark:text-white">
+											<span class="text-[#1F41BB]">{invite.fromUsername}</span> invited you to swim
+										</p>
+										<p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+											{formatInviteDate(invite.date)} at {invite.time}
+										</p>
+										<p class="text-sm text-gray-500 dark:text-gray-400">{invite.location}</p>
+										{#if invite.message}
+											<p class="mt-1.5 text-xs italic text-gray-400">"{invite.message}"</p>
+										{/if}
+									</div>
+									<div class="flex shrink-0 gap-2">
+										<button
+											onclick={() => respondToInvite(invite._id, 'accepted')}
+											class="rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-600"
+										>
+											Accept
+										</button>
+										<button
+											onclick={() => respondToInvite(invite._id, 'declined')}
+											class="rounded-xl bg-red-100 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+										>
+											Decline
+										</button>
+									</div>
+								</div>
+							</div>
+						{/each}
 					</div>
 				{/if}
 			</div>

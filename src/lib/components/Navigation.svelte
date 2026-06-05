@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { pendingInviteCount } from '$lib/stores/inviteCount';
 
 	let userName = $state('');
 	let userInitial = $derived(userName ? userName[0].toUpperCase() : '?');
@@ -29,9 +30,7 @@
 </script>
 
 <!-- Desktop left sidebar -->
-<aside
-	class="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col bg-[#0D1B4B] shadow-2xl md:flex"
->
+<aside class="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col bg-[#0D1B4B] shadow-2xl md:flex">
 	<!-- Logo -->
 	<div class="flex h-16 shrink-0 items-center gap-2 border-b border-white/10 px-6">
 		<span class="text-xl">🏊</span>
@@ -49,7 +48,16 @@
 						: 'text-white/70 hover:bg-white/10 hover:text-white'
 				}`}
 			>
-				<span class="text-lg leading-none">{link.icon}</span>
+				<span class="relative text-lg leading-none">
+					{link.icon}
+					{#if link.href === '/profile' && $pendingInviteCount > 0}
+						<span
+							class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white"
+						>
+							{$pendingInviteCount > 9 ? '9+' : $pendingInviteCount}
+						</span>
+					{/if}
+				</span>
 				{link.label}
 			</a>
 		{/each}
@@ -85,10 +93,17 @@
 				isActive(link.href) ? 'text-[#0ABFBC]' : 'text-white/50 hover:text-white/80'
 			}`}
 		>
-			<span class="text-lg leading-none">{link.icon}</span>
-			<span class="text-[10px] font-medium leading-none"
-				>{link.label.split(' ')[0]}</span
-			>
+			<span class="relative text-lg leading-none">
+				{link.icon}
+				{#if link.href === '/profile' && $pendingInviteCount > 0}
+					<span
+						class="absolute -right-1.5 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white"
+					>
+						{$pendingInviteCount > 9 ? '9+' : $pendingInviteCount}
+					</span>
+				{/if}
+			</span>
+			<span class="text-[10px] font-medium leading-none">{link.label.split(' ')[0]}</span>
 		</a>
 	{/each}
 </nav>

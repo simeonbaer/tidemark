@@ -23,7 +23,7 @@
 		_id: string;
 		creatorId: string;
 		opponentId: string;
-		distanceGoal: number; // meters
+		distanceGoal: number;
 		bet: string;
 		status: 'active' | 'completed';
 		createdAt: string;
@@ -48,6 +48,20 @@
 		opponent: { _id: string; username: string; profilePicture: string | null } | null;
 	}
 
+	interface Invite {
+		_id: string;
+		fromUserId: string;
+		fromUsername: string;
+		toUserId: string;
+		toUsername: string;
+		date: string;
+		time: string;
+		location: string;
+		message: string;
+		status: 'pending' | 'accepted' | 'declined';
+		createdAt: string;
+	}
+
 	let state = $state({
 		userId: null as string | null,
 		userName: null as string | null,
@@ -57,6 +71,7 @@
 		activeBattle: null as Battle | null,
 		currentUserActivities: [] as Activity[],
 		battleHistory: [] as CompletedBattle[],
+		upcomingInvites: [] as Invite[],
 		newBattle: { distanceGoalMeters: 0, bet: '' },
 		loading: false,
 		loadingOpponent: false,
@@ -68,7 +83,6 @@
 		successMessage: ''
 	});
 
-	// Tracks which battle ID has already been queued for auto-complete (plain var, not reactive)
 	let autoCompletedBattleId = '';
 	let refreshInterval: ReturnType<typeof setInterval>;
 	let visibilityHandler: () => void;
@@ -82,7 +96,6 @@
 		}
 		await Promise.all([loadUsers(), loadUserActivities()]);
 
-		// Refresh when the user switches back to this tab
 		visibilityHandler = () => {
 			if (!document.hidden && state.activeBattle && state.selectedOpponent) {
 				refreshData();
@@ -90,7 +103,6 @@
 		};
 		document.addEventListener('visibilitychange', visibilityHandler);
 
-		// Auto-refresh battle data every 15 seconds
 		refreshInterval = setInterval(() => {
 			if (state.activeBattle && state.selectedOpponent) {
 				refreshData();
@@ -103,7 +115,6 @@
 		document.removeEventListener('visibilitychange', visibilityHandler);
 	});
 
-	// Auto-complete battle when winning condition is met
 	$effect(() => {
 		const w = winner;
 		const b = state.activeBattle;
@@ -159,6 +170,7 @@
 		state.activeBattle = null;
 		state.opponentStats = null;
 		state.battleHistory = [];
+		state.upcomingInvites = [];
 		state.errorMessage = '';
 		state.showEndConfirm = false;
 		autoCompletedBattleId = '';
@@ -182,8 +194,8 @@
 			state.loadingOpponent = false;
 		}
 
-		// Load history (for the no-active-battle view or after transitions)
 		loadBattleHistory(opponent._id);
+		loadUpcomingInvites(opponent._id);
 	}
 
 	async function loadBattleHistory(opponentId: string) {
@@ -199,6 +211,26 @@
 			console.error('Error loading battle history:', error);
 		} finally {
 			state.loadingHistory = false;
+		}
+	}
+
+	async function loadUpcomingInvites(opponentId: string) {
+		try {
+			const response = await fetch(`/api/invites?userId=${state.userId}`);
+			if (!response.ok) return;
+			const all: Invite[] = await response.json();
+			const today = new Date().toISOString().split('T')[0];
+			state.upcomingInvites = all
+				.filter(
+					(inv) =>
+						inv.status === 'accepted' &&
+						inv.date >= today &&
+						((inv.fromUserId === state.userId && inv.toUserId === opponentId) ||
+							(inv.fromUserId === opponentId && inv.toUserId === state.userId))
+				)
+				.sort((a, b) => a.date.localeCompare(b.date));
+		} catch (error) {
+			console.error('Error loading upcoming invites:', error);
 		}
 	}
 
@@ -334,6 +366,14 @@
 			month: 'short',
 			day: 'numeric',
 			year: 'numeric'
+		});
+	}
+
+	function formatInviteDate(dateStr: string): string {
+		return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', {
+			weekday: 'short',
+			month: 'short',
+			day: 'numeric'
 		});
 	}
 
@@ -483,7 +523,6 @@
 									</p>
 								</div>
 								<div class="flex shrink-0 items-center gap-2">
-									<!-- Refresh button -->
 									<button
 										onclick={refreshData}
 										disabled={state.refreshing}
@@ -492,7 +531,6 @@
 									>
 										{state.refreshing ? '↻…' : '↻ Refresh'}
 									</button>
-									<!-- End battle button -->
 									{#if !state.showEndConfirm}
 										<button
 											onclick={() => (state.showEndConfirm = true)}
@@ -504,7 +542,6 @@
 								</div>
 							</div>
 
-							<!-- End battle confirmation -->
 							{#if state.showEndConfirm}
 								<div
 									class="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20"
@@ -527,7 +564,6 @@
 								</div>
 							{/if}
 
-							<!-- Bet banner -->
 							{#if state.activeBattle.bet}
 								<div
 									class="mb-5 flex items-center gap-2 rounded-xl bg-yellow-50 px-4 py-3 text-sm dark:bg-yellow-900/20"
@@ -537,7 +573,6 @@
 								</div>
 							{/if}
 
-							<!-- Winner banner + countdown -->
 							{#if winner}
 								<div
 									class="mb-6 rounded-2xl bg-gradient-to-r from-yellow-400 to-[#FF6B6B] p-6 text-center shadow"
@@ -563,7 +598,6 @@
 
 							<!-- Lead slider -->
 							<div>
-								<!-- Competitors row -->
 								<div class="mb-4 flex items-center justify-between">
 									<div class="flex items-center gap-2">
 										{#if state.opponentStats.opponent.profilePicture}
@@ -606,30 +640,25 @@
 									</div>
 								</div>
 
-								<!-- Track -->
 								<div class="relative py-2">
 									<div class="flex h-5 overflow-hidden rounded-full shadow-inner">
 										<div class="w-1/2 bg-[#FF6B6B]/80"></div>
 										<div class="w-1/2 bg-[#1F41BB]/80"></div>
 									</div>
-									<!-- Center tick -->
 									<div
 										class="pointer-events-none absolute bottom-0 left-1/2 top-0 w-0.5 -translate-x-1/2 bg-white/60"
 									></div>
-									<!-- Marker -->
 									<div
 										class="absolute top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-xl ring-2 ring-gray-200 transition-all duration-700 dark:ring-gray-600"
 										style="left: {sliderPct}%;"
 									></div>
 								</div>
 
-								<!-- End labels -->
 								<div class="mt-1 flex justify-between text-xs font-medium">
 									<span class="text-[#FF6B6B]">← Opponent wins</span>
 									<span class="text-[#1F41BB]">You win →</span>
 								</div>
 
-								<!-- Status text -->
 								<div class="mt-3 text-center text-xs text-gray-500 dark:text-gray-400">
 									{#if lead > 0}
 										You lead by
@@ -701,6 +730,31 @@
 								{/if}
 							</div>
 						</div>
+
+						<!-- Upcoming Swims Together (active battle view) -->
+						{#if state.upcomingInvites.length > 0}
+							<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
+								<h2 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
+									Upcoming Swims Together
+								</h2>
+								<div class="space-y-3">
+									{#each state.upcomingInvites as invite (invite._id)}
+										<div class="flex items-start gap-3 rounded-xl bg-teal-50 p-4 dark:bg-teal-900/20">
+											<span class="shrink-0 text-2xl">🤝</span>
+											<div>
+												<p class="text-sm font-semibold text-[#0D1B4B] dark:text-white">
+													{formatInviteDate(invite.date)} at {invite.time}
+												</p>
+												<p class="text-sm text-gray-500 dark:text-gray-400">{invite.location}</p>
+												{#if invite.message}
+													<p class="mt-1 text-xs italic text-gray-400">"{invite.message}"</p>
+												{/if}
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
 					{:else}
 						<!-- ── No Active Battle ── -->
 						<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
@@ -859,6 +913,31 @@
 														>{formatDistance(battle.opponentDistance)}</span
 													>
 												</div>
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+
+						<!-- Upcoming Swims Together (no-battle view) -->
+						{#if state.upcomingInvites.length > 0}
+							<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
+								<h2 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
+									Upcoming Swims Together
+								</h2>
+								<div class="space-y-3">
+									{#each state.upcomingInvites as invite (invite._id)}
+										<div class="flex items-start gap-3 rounded-xl bg-teal-50 p-4 dark:bg-teal-900/20">
+											<span class="shrink-0 text-2xl">🤝</span>
+											<div>
+												<p class="text-sm font-semibold text-[#0D1B4B] dark:text-white">
+													{formatInviteDate(invite.date)} at {invite.time}
+												</p>
+												<p class="text-sm text-gray-500 dark:text-gray-400">{invite.location}</p>
+												{#if invite.message}
+													<p class="mt-1 text-xs italic text-gray-400">"{invite.message}"</p>
+												{/if}
 											</div>
 										</div>
 									{/each}
