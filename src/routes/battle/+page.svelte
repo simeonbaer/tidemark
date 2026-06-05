@@ -464,9 +464,10 @@
 	});
 
 	let waveFillPct = $derived.by(() => {
-		const total = yourDist + oppDist;
-		if (total === 0) return 50;
-		return Math.min(Math.max(Math.round((yourDist / total) * 100), 0), 100);
+		if (!state.activeBattle) return 50;
+		const goal = state.activeBattle.distanceGoal;
+		const position = (yourDist - oppDist + goal) / (2 * goal);
+		return Math.round(Math.min(Math.max(position, 0), 1) * 100);
 	});
 
 	let allActivities = $derived(
