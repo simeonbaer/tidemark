@@ -463,6 +463,12 @@
 		return Math.max(0, state.activeBattle.distanceGoal - Math.abs(lead));
 	});
 
+	let waveFillPct = $derived.by(() => {
+		const total = yourDist + oppDist;
+		if (total === 0) return 50;
+		return Math.min(Math.max(Math.round((yourDist / total) * 100), 0), 100);
+	});
+
 	let allActivities = $derived(
 		state.opponentStats
 			? getAllActivitiesSorted(state.currentUserActivities, state.opponentStats.recentActivities)
@@ -698,111 +704,156 @@
 								</div>
 							{/if}
 
-							<!-- Lead slider -->
-							<div>
-								<div class="mb-4 flex items-center justify-between">
-									<div class="flex items-center gap-2">
-										{#if state.opponentStats.opponent.profilePicture}
-											<img
-												src={state.opponentStats.opponent.profilePicture}
-												alt={state.selectedOpponent.username}
-												class="h-9 w-9 rounded-full object-cover shadow"
-											/>
-										{:else}
-											<div
-												class="flex h-9 w-9 items-center justify-center rounded-full bg-[#FF6B6B] text-sm font-bold text-white shadow"
-											>
-												{getInitial(state.selectedOpponent.username)}
-											</div>
-										{/if}
-										<div>
-											<div class="text-sm font-semibold text-[#0D1B4B] dark:text-white">
-												{state.selectedOpponent.username}
-											</div>
-											<div class="text-xs font-medium text-[#FF6B6B]">
-												{formatDistance(oppDist)}
-											</div>
-										</div>
-									</div>
-									<div class="flex items-center gap-2">
-										<div class="text-right">
-											<div class="text-sm font-semibold text-[#0D1B4B] dark:text-white">
-												{state.userName}
-												<span class="text-xs font-normal text-gray-400">(You)</span>
-											</div>
-											<div class="text-xs font-medium text-[#1F41BB]">
-												{formatDistance(yourDist)}
-											</div>
-										</div>
+							<!-- ── Battle Progress — Animated Wave ── -->
+							<div
+								class="overflow-hidden rounded-2xl border border-white/10 bg-[#0D1B4B] p-6 shadow-xl"
+							>
+								<!-- VS Header -->
+								<div class="mb-6 flex items-end justify-between">
+									<!-- User (left) -->
+									<div class="flex flex-col items-center gap-2">
 										{#if state.currentUserPicture}
 											<img
 												src={state.currentUserPicture}
 												alt="You"
-												class="h-9 w-9 rounded-full object-cover shadow"
+												class="h-20 w-20 rounded-full object-cover ring-2 ring-[#1F41BB] shadow-[0_4px_20px_rgba(31,65,187,0.5)]"
 											/>
 										{:else}
 											<div
-												class="flex h-9 w-9 items-center justify-center rounded-full bg-[#1F41BB] text-sm font-bold text-white shadow"
+												class="flex h-20 w-20 items-center justify-center rounded-full bg-[#1F41BB] text-2xl font-bold text-white ring-2 ring-[#1F41BB]/60 shadow-[0_4px_20px_rgba(31,65,187,0.5)]"
 											>
 												{getInitial(state.userName || '')}
 											</div>
 										{/if}
+										<div class="text-center">
+											<p class="text-sm font-semibold text-white">
+												{state.userName}
+												<span class="text-xs font-normal text-white/40">(You)</span>
+											</p>
+											<p class="text-lg font-bold text-[#1F41BB]">
+												{formatDistance(yourDist)}
+											</p>
+										</div>
 									</div>
-								</div>
 
-								<div class="relative py-2">
-									<div class="flex h-5 overflow-hidden rounded-full shadow-inner">
-										<div class="w-1/2 bg-[#FF6B6B]/80"></div>
-										<div class="w-1/2 bg-[#1F41BB]/80"></div>
+									<!-- VS badge -->
+									<div class="pb-8 text-2xl font-extrabold tracking-widest text-white/25">
+										VS
 									</div>
-									<div
-										class="pointer-events-none absolute bottom-0 left-1/2 top-0 w-0.5 -translate-x-1/2 bg-white/60"
-									></div>
-									<div
-										class="absolute top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-xl ring-2 ring-gray-200 transition-all duration-700 dark:ring-gray-600"
-										style="left: {sliderPct}%;"
-									></div>
-								</div>
 
-								<div class="mt-1 flex justify-between text-xs font-medium">
-									<span class="text-[#FF6B6B]">← Opponent wins</span>
-									<span class="text-[#1F41BB]">You win →</span>
-								</div>
-
-								<div class="mt-3 text-center text-xs text-gray-500 dark:text-gray-400">
-									{#if lead > 0}
-										You lead by
-										<span class="font-semibold text-[#1F41BB]">{formatDistance(lead)}</span>
-										{#if !winner}
-											· <span class="text-gray-400">{formatDistance(distToWin)} to win</span>
+									<!-- Opponent (right) -->
+									<div class="flex flex-col items-center gap-2">
+										{#if state.opponentStats.opponent.profilePicture}
+											<img
+												src={state.opponentStats.opponent.profilePicture}
+												alt={state.selectedOpponent.username}
+												class="h-20 w-20 rounded-full object-cover ring-2 ring-[#0ABFBC] shadow-[0_4px_20px_rgba(10,191,188,0.5)]"
+											/>
+										{:else}
+											<div
+												class="flex h-20 w-20 items-center justify-center rounded-full bg-[#0ABFBC] text-2xl font-bold text-white ring-2 ring-[#0ABFBC]/60 shadow-[0_4px_20px_rgba(10,191,188,0.5)]"
+											>
+												{getInitial(state.selectedOpponent.username)}
+											</div>
 										{/if}
-									{:else if lead < 0}
-										<span class="font-semibold text-[#FF6B6B]"
-											>{state.selectedOpponent.username}</span
-										> leads by
-										<span class="font-semibold text-[#FF6B6B]"
-											>{formatDistance(Math.abs(lead))}</span
+										<div class="text-center">
+											<p class="text-sm font-semibold text-white">
+												{state.selectedOpponent.username}
+											</p>
+											<p class="text-lg font-bold text-[#0ABFBC]">
+												{formatDistance(oppDist)}
+											</p>
+										</div>
+									</div>
+								</div>
+
+								<!-- Animated Wave Bar -->
+								<div class="relative h-16 overflow-hidden rounded-full">
+									<!-- Blue fill (user, left) -->
+									<div
+										class="absolute inset-y-0 left-0 bg-[#1F41BB] transition-[width] duration-700 ease-out"
+										style="width: calc({waveFillPct}% + 25px);"
+									></div>
+									<!-- Teal fill (opponent, right) -->
+									<div
+										class="absolute inset-y-0 right-0 bg-[#0ABFBC] transition-[width] duration-700 ease-out"
+										style="width: calc({100 - waveFillPct}% + 25px);"
+									></div>
+									<!-- Animated wave SVG divider -->
+									<div
+										class="wave-divider absolute inset-y-0 transition-[left] duration-700 ease-out"
+										style="left: {waveFillPct}%; margin-left: -25px;"
+									>
+										<svg
+											width="50"
+											height="64"
+											viewBox="0 0 50 64"
+											preserveAspectRatio="none"
 										>
-										{#if !winner}
-											· <span class="text-gray-400">{formatDistance(distToWin)} to win</span>
+											<path
+												d="M 0,0 L 25,0 C 20,16 30,16 25,32 C 20,48 30,48 25,64 L 0,64 Z"
+												fill="#1F41BB"
+											/>
+											<path
+												d="M 50,0 L 25,0 C 20,16 30,16 25,32 C 20,48 30,48 25,64 L 50,64 Z"
+												fill="#0ABFBC"
+											/>
+										</svg>
+									</div>
+									<!-- Swimmer emoji marker -->
+									<div
+										class="pointer-events-none absolute top-1/2 z-10 text-xl transition-[left] duration-700 ease-out"
+										style="left: {waveFillPct}%; transform: translate(-50%, -50%);"
+									>
+										🏊
+									</div>
+								</div>
+
+								<!-- Status text -->
+								<div class="mt-5 space-y-1.5 text-center">
+									<p class="text-sm font-semibold">
+										{#if lead > 0}
+											<span class="text-[#7B9FFF]">
+												You lead by
+												<span class="font-bold text-white">{formatDistance(lead)}</span>
+											</span>
+										{:else if lead < 0}
+											<span class="text-[#0ABFBC]">
+												{state.selectedOpponent.username} leads by
+												<span class="font-bold text-white"
+													>{formatDistance(Math.abs(lead))}</span
+												>
+											</span>
+										{:else}
+											<span class="text-white">It's a tie! 🌊</span>
 										{/if}
-									{:else}
-										⚖️ Tied — first to lead by {formatDistance(
+									</p>
+									<p class="text-xs text-white/40">
+										Goal: first to lead by {formatDistance(
 											state.activeBattle.distanceGoal
 										)} wins
+										{#if !winner}· {formatDistance(distToWin)} more to win{/if}
+									</p>
+									{#if state.activeBattle.bet}
+										<p class="text-xs font-medium text-yellow-300">
+											🎰 Bet: {state.activeBattle.bet}
+										</p>
 									{/if}
 								</div>
 
-								<p class="mt-4 text-center text-xs text-gray-400">
-									Progress counts from battle start ·
+								<!-- Refresh -->
+								<div class="mt-4 text-center">
 									<button
 										onclick={refreshData}
-										class="text-[#1F41BB] underline hover:no-underline"
+										class="text-xs text-white/30 underline hover:text-white/60 disabled:cursor-default"
 										disabled={state.refreshing}
 									>
 										{state.refreshing ? 'refreshing…' : 'refresh now'}
 									</button>
-								</p>
+									<span class="text-xs text-white/20">
+										· progress counts from battle start</span
+									>
+								</div>
 							</div>
 						</div>
 
@@ -1068,3 +1119,21 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	@keyframes wave-move {
+		0% {
+			transform: translateX(0);
+		}
+		50% {
+			transform: translateX(-10px);
+		}
+		100% {
+			transform: translateX(0);
+		}
+	}
+
+	.wave-divider {
+		animation: wave-move 2s ease-in-out infinite;
+	}
+</style>
