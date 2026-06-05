@@ -42,7 +42,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		const totalDecided = battlesWon + battlesLost;
 		const winRate = totalDecided > 0 ? Math.round((battlesWon / totalDecided) * 100) : 0;
 
-		// Personal bests
+		// Personal bests (all-time)
 		const personalBestDistance =
 			activities.length > 0 ? Math.max(...activities.map((a) => a.distance || 0)) : 0;
 
@@ -54,22 +54,102 @@ export const GET: RequestHandler = async ({ url }) => {
 				? Math.min(...activitiesWithBoth.map((a) => a.duration / (a.distance / 100)))
 				: 0;
 
-		// Monthly distances
+		// Monthly stats
 		const now = new Date();
 		const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 		const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 		const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
-		const thisMonthDistance = activities
-			.filter((a) => new Date(a.date) >= thisMonthStart)
-			.reduce((sum, a) => sum + (a.distance || 0), 0);
+		const thisMonthActivities = activities.filter((a) => new Date(a.date) >= thisMonthStart);
+		const lastMonthActivities = activities.filter((a) => {
+			const d = new Date(a.date);
+			return d >= lastMonthStart && d <= lastMonthEnd;
+		});
 
-		const lastMonthDistance = activities
-			.filter((a) => {
+		const thisMonthDistance = thisMonthActivities.reduce((sum, a) => sum + (a.distance || 0), 0);
+		const lastMonthDistance = lastMonthActivities.reduce((sum, a) => sum + (a.distance || 0), 0);
+		const thisMonthSessions = thisMonthActivities.length;
+		const lastMonthSessions = lastMonthActivities.length;
+
+		const thisMonthWithBoth = thisMonthActivities.filter(
+			(a) => (a.distance || 0) > 0 && (a.duration || 0) > 0
+		);
+		const bestPaceThisMonth =
+			thisMonthWithBoth.length > 0
+				? Math.min(...thisMonthWithBoth.map((a) => a.duration / (a.distance / 100)))
+				: 0;
+
+		// Weekly stats — last 8 weeks (week starts Monday)
+		const getWeekStart = (date: Date): Date => {
+			const d = new Date(date);
+			const day = d.getDay(); // 0 = Sun, 1 = Mon
+			const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+			d.setDate(diff);
+			d.setHours(0, 0, 0, 0);
+			return d;
+		};
+
+		const currentWeekStart = getWeekStart(now);
+		const weeklyStats = [];
+
+		for (let i = 0; i < 8; i++) {
+			const weekStart = new Date(currentWeekStart);
+			weekStart.setDate(weekStart.getDate() - i * 7);
+			const weekEnd = new Date(weekStart);
+			weekEnd.setDate(weekEnd.getDate() + 7);
+
+			const weekActivities = activities.filter((a) => {
 				const d = new Date(a.date);
-				return d >= lastMonthStart && d <= lastMonthEnd;
-			})
-			.reduce((sum, a) => sum + (a.distance || 0), 0);
+				return d >= weekStart && d < weekEnd;
+			});
+
+			const dist = weekActivities.reduce((sum, a) => sum + (a.distance || 0), 0);
+			const dur = weekActivities.reduce((sum, a) => sum + (a.duration || 0), 0);
+			const sessions = weekActivities.length;
+			const avgPace = dist > 0 && dur > 0 ? dur / (dist / 100) : 0;
+			const calories = weekActivities.reduce(
+				(sum, a) => sum + Math.round((a.duration || 0) * 8),
+				0
+			);
+			const bestSession =
+				weekActivities.length > 0
+					? Math.max(...weekActivities.map((a) => a.distance || 0))
+					: 0;
+
+			weeklyStats.push({
+				weekStart: weekStart.toISOString(),
+				distance: dist,
+				sessions,
+				avgPace,
+				calories,
+				bestSession
+			});
+		}
+
+		// Most sessions in a single week (across all history, not just the last 8)
+		const mostSessionsInWeek = weeklyStats.reduce((max, w) => Math.max(max, w.sessions), 0);
+
+		// Longest consecutive-day streak
+		const dateKey = (d: Date): string =>
+			`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+		const activeDateSet = new Set(activities.map((a) => dateKey(new Date(a.date))));
+		const sortedDates = [...activeDateSet].sort();
+
+		let longestStreak = sortedDates.length > 0 ? 1 : 0;
+		let currentStreakCount = sortedDates.length > 0 ? 1 : 0;
+
+		for (let i = 1; i < sortedDates.length; i++) {
+			const prev = new Date(sortedDates[i - 1]);
+			const curr = new Date(sortedDates[i]);
+			const diffDays = Math.round((curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+			if (diffDays === 1) {
+				currentStreakCount++;
+				if (currentStreakCount > longestStreak) longestStreak = currentStreakCount;
+			} else {
+				currentStreakCount = 1;
+			}
+		}
 
 		return json({
 			_id: user._id.toString(),
@@ -88,7 +168,13 @@ export const GET: RequestHandler = async ({ url }) => {
 				personalBestDistance,
 				personalBestPace,
 				thisMonthDistance,
-				lastMonthDistance
+				lastMonthDistance,
+				thisMonthSessions,
+				lastMonthSessions,
+				bestPaceThisMonth,
+				weeklyStats,
+				longestStreak,
+				mostSessionsInWeek
 			}
 		});
 	} catch (error) {

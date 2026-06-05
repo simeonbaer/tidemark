@@ -3,6 +3,15 @@
 	import { goto } from '$app/navigation';
 	import { darkMode } from '$lib/stores/theme';
 
+	interface WeekStat {
+		weekStart: string;
+		distance: number;
+		sessions: number;
+		avgPace: number;
+		calories: number;
+		bestSession: number;
+	}
+
 	interface ProfileData {
 		_id: string;
 		username: string;
@@ -21,6 +30,12 @@
 			personalBestPace: number;
 			thisMonthDistance: number;
 			lastMonthDistance: number;
+			thisMonthSessions: number;
+			lastMonthSessions: number;
+			bestPaceThisMonth: number;
+			weeklyStats: WeekStat[];
+			longestStreak: number;
+			mostSessionsInWeek: number;
 		};
 	}
 
@@ -149,6 +164,7 @@
 
 	function formatDistance(meters: number): string {
 		if (meters === 0) return '0 m';
+		if (meters < 1000) return `${meters} m`;
 		return `${(meters / 1000).toFixed(2)} km`;
 	}
 
@@ -164,6 +180,10 @@
 		return `${minPer100m.toFixed(1)} min/100m`;
 	}
 
+	function formatWeekLabel(isoDate: string): string {
+		return new Date(isoDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+	}
+
 	function monthImprovement(
 		thisMonth: number,
 		lastMonth: number
@@ -172,6 +192,21 @@
 		const raw = Math.round(((thisMonth - lastMonth) / lastMonth) * 100);
 		return { pct: Math.abs(raw), improved: raw >= 0 };
 	}
+
+	// Index of the best week by distance (for table highlight)
+	let bestWeekIdx = $derived.by(() => {
+		const weeks = state.profile?.stats.weeklyStats;
+		if (!weeks?.length) return -1;
+		let maxDist = 0;
+		let idx = -1;
+		weeks.forEach((w, i) => {
+			if (w.distance > maxDist) {
+				maxDist = w.distance;
+				idx = i;
+			}
+		});
+		return maxDist > 0 ? idx : -1;
+	});
 
 	const skillLevels = ['beginner', 'intermediate', 'advanced', 'elite'];
 </script>
@@ -204,8 +239,14 @@
 				state.profile.stats.thisMonthDistance,
 				state.profile.stats.lastMonthDistance
 			)}
+			{@const sessImp = monthImprovement(
+				state.profile.stats.thisMonthSessions,
+				state.profile.stats.lastMonthSessions
+			)}
+
+			<!-- ── Top grid: avatar / monthly card + stat cards / edit ── -->
 			<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-				<!-- Left column: avatar + monthly progress -->
+				<!-- Left column: avatar + monthly mini-card -->
 				<div class="space-y-4">
 					<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 						<div class="flex flex-col items-center">
@@ -245,7 +286,7 @@
 						</div>
 					</div>
 
-					<!-- Monthly improvement -->
+					<!-- Monthly mini-card -->
 					<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 						<p class="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">
 							Monthly Progress
@@ -256,9 +297,7 @@
 						<p class="mt-0.5 text-xs text-gray-400">this month</p>
 						{#if state.profile.stats.lastMonthDistance > 0 || state.profile.stats.thisMonthDistance > 0}
 							<div class="mt-2 flex items-center gap-1.5">
-								<span
-									class={`text-sm font-bold ${imp.improved ? 'text-[#2ECC71]' : 'text-[#FF6B6B]'}`}
-								>
+								<span class={`text-sm font-bold ${imp.improved ? 'text-[#2ECC71]' : 'text-[#FF6B6B]'}`}>
 									{imp.improved ? '↑' : '↓'}{imp.pct}%
 								</span>
 								<span class="text-xs text-gray-400">
@@ -271,7 +310,7 @@
 					</div>
 				</div>
 
-				<!-- Right column: stats + edit -->
+				<!-- Right column: stats + battle record + personal bests + edit -->
 				<div class="space-y-6 lg:col-span-2">
 					<!-- Swim stats -->
 					<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -328,7 +367,7 @@
 						</div>
 					</div>
 
-					<!-- Personal bests -->
+					<!-- Personal bests (quick view) -->
 					<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 						<h3 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
 							Personal Bests
@@ -416,6 +455,163 @@
 						</div>
 					</div>
 				</div>
+			</div>
+
+			<!-- ── Analytics sections ── -->
+
+			<!-- Monthly Overview -->
+			<div class="mt-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
+				<h3 class="mb-5 text-xs font-bold uppercase tracking-wide text-gray-400">Monthly Overview</h3>
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+					<!-- Distance this month vs last -->
+					<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
+						<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Distance This Month</p>
+						<p class="mt-2 text-2xl font-bold text-[#1F41BB]">
+							{formatDistance(state.profile.stats.thisMonthDistance)}
+						</p>
+						{#if state.profile.stats.lastMonthDistance > 0 || state.profile.stats.thisMonthDistance > 0}
+							<div class="mt-1 flex items-center gap-1.5 text-xs">
+								<span class={`font-bold ${imp.improved ? 'text-[#2ECC71]' : 'text-[#FF6B6B]'}`}>
+									{imp.improved ? '↑' : '↓'}{imp.pct}%
+								</span>
+								<span class="text-gray-400">vs {formatDistance(state.profile.stats.lastMonthDistance)} last month</span>
+							</div>
+						{:else}
+							<p class="mt-1 text-xs text-gray-400">No prior month data</p>
+						{/if}
+					</div>
+
+					<!-- Sessions this month vs last -->
+					<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
+						<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Sessions This Month</p>
+						<p class="mt-2 text-2xl font-bold text-[#0ABFBC]">
+							{state.profile.stats.thisMonthSessions}
+						</p>
+						{#if state.profile.stats.lastMonthSessions > 0 || state.profile.stats.thisMonthSessions > 0}
+							<div class="mt-1 flex items-center gap-1.5 text-xs">
+								<span class={`font-bold ${sessImp.improved ? 'text-[#2ECC71]' : 'text-[#FF6B6B]'}`}>
+									{sessImp.improved ? '↑' : '↓'}{sessImp.pct}%
+								</span>
+								<span class="text-gray-400">vs {state.profile.stats.lastMonthSessions} last month</span>
+							</div>
+						{:else}
+							<p class="mt-1 text-xs text-gray-400">No prior month data</p>
+						{/if}
+					</div>
+
+					<!-- Best pace this month -->
+					<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
+						<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Best Pace This Month</p>
+						<p class="mt-2 text-2xl font-bold text-[#FF6B6B]">
+							{formatPace(state.profile.stats.bestPaceThisMonth)}
+						</p>
+						<p class="mt-1 text-xs text-gray-400">
+							{state.profile.stats.bestPaceThisMonth > 0 ? 'min per 100m' : 'no data this month'}
+						</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- Personal Records -->
+			<div class="mt-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
+				<h3 class="mb-5 text-xs font-bold uppercase tracking-wide text-gray-400">Personal Records</h3>
+				<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+					<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
+						<div class="text-2xl">🏊</div>
+						<p class="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400">Longest Swim</p>
+						<p class="mt-1 text-xl font-bold text-[#1F41BB]">
+							{state.profile.stats.personalBestDistance > 0
+								? formatDistance(state.profile.stats.personalBestDistance)
+								: '—'}
+						</p>
+					</div>
+					<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
+						<div class="text-2xl">⚡</div>
+						<p class="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400">Fastest Pace</p>
+						<p class="mt-1 text-xl font-bold text-[#0ABFBC]">
+							{formatPace(state.profile.stats.personalBestPace)}
+						</p>
+					</div>
+					<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
+						<div class="text-2xl">📅</div>
+						<p class="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400">Most Sessions/Week</p>
+						<p class="mt-1 text-xl font-bold text-[#FF6B6B]">
+							{state.profile.stats.mostSessionsInWeek > 0
+								? `${state.profile.stats.mostSessionsInWeek}`
+								: '—'}
+						</p>
+					</div>
+					<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
+						<div class="text-2xl">🔥</div>
+						<p class="mt-2 text-xs font-medium text-gray-500 dark:text-gray-400">Longest Streak</p>
+						<p class="mt-1 text-xl font-bold text-[#2ECC71]">
+							{state.profile.stats.longestStreak > 0
+								? `${state.profile.stats.longestStreak} days`
+								: '—'}
+						</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- Weekly Summary Table -->
+			<div class="mt-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
+				<h3 class="mb-5 text-xs font-bold uppercase tracking-wide text-gray-400">Weekly Summary — Last 8 Weeks</h3>
+				{#if state.profile.stats.weeklyStats.every((w) => w.sessions === 0)}
+					<div class="flex h-24 items-center justify-center">
+						<p class="text-sm text-gray-400">No activity data to display</p>
+					</div>
+				{:else}
+					<div class="overflow-x-auto">
+						<table class="w-full min-w-[580px] text-sm">
+							<thead>
+								<tr class="border-b border-gray-200 dark:border-gray-700">
+									<th class="pb-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">Week</th>
+									<th class="pb-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-400">Distance</th>
+									<th class="pb-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-400">Sessions</th>
+									<th class="pb-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-400">Avg Pace</th>
+									<th class="pb-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-400">Calories</th>
+									<th class="pb-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-400">Best Session</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each state.profile.stats.weeklyStats as week, i}
+									{@const isBest = i === bestWeekIdx}
+									<tr
+										class={`border-b border-gray-100 transition-colors last:border-0 dark:border-gray-700/50 ${
+											isBest ? 'bg-green-50 dark:bg-green-900/20' : ''
+										}`}
+									>
+										<td class="py-3 pr-4">
+											<span class="font-medium text-[#0D1B4B] dark:text-white">
+												{i === 0 ? 'This week' : i === 1 ? 'Last week' : `Week of ${formatWeekLabel(week.weekStart)}`}
+											</span>
+											{#if isBest && week.sessions > 0}
+												<span
+													class="ml-2 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700 dark:bg-green-900/40 dark:text-green-400"
+												>BEST</span>
+											{/if}
+										</td>
+										<td class="py-3 text-right font-semibold text-[#1F41BB]">
+											{week.distance > 0 ? formatDistance(week.distance) : '—'}
+										</td>
+										<td class="py-3 text-right text-gray-600 dark:text-gray-400">
+											{week.sessions > 0 ? week.sessions : '—'}
+										</td>
+										<td class="py-3 text-right text-gray-600 dark:text-gray-400">
+											{week.avgPace > 0 ? formatPace(week.avgPace) : '—'}
+										</td>
+										<td class="py-3 text-right text-gray-600 dark:text-gray-400">
+											{week.calories > 0 ? `${week.calories.toLocaleString()} kcal` : '—'}
+										</td>
+										<td class="py-3 text-right font-medium text-[#0ABFBC]">
+											{week.bestSession > 0 ? formatDistance(week.bestSession) : '—'}
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/if}
 			</div>
 		{/if}
 	</div>
