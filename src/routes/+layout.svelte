@@ -3,6 +3,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import Navigation from '$lib/components/Navigation.svelte';
 	import { page } from '$app/state';
+	import '$lib/stores/theme';
 
 	let { children } = $props();
 
@@ -13,7 +14,7 @@
 
 {#if showNav}
 	<Navigation />
-	<main class="min-h-screen bg-[#F0F4FF] pb-20 md:ml-64 md:pb-0">
+	<main class="min-h-screen bg-[#F0F4FF] pb-20 md:ml-64 md:pb-0 dark:bg-gray-900">
 		{@render children()}
 	</main>
 {:else}

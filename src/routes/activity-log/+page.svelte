@@ -189,10 +189,10 @@
 		</div>
 
 		{#if state.errorMessage}
-			<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{state.errorMessage}</div>
+			<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">{state.errorMessage}</div>
 		{/if}
 		{#if state.successMessage}
-			<div class="mb-4 rounded-xl bg-green-50 p-4 text-sm text-green-700">
+			<div class="mb-4 rounded-xl bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
 				{state.successMessage}
 			</div>
 		{/if}
@@ -200,23 +200,23 @@
 		<!-- Stats -->
 		{#if visibleActivities.length > 0}
 			<div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
-				<div class="rounded-2xl bg-white p-5 shadow-sm">
+				<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Distance</p>
 					<p class="mt-2 text-xl font-bold text-[#1F41BB]">{formatDistance(totalStats.distance)}</p>
 				</div>
-				<div class="rounded-2xl bg-white p-5 shadow-sm">
+				<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Duration</p>
 					<p class="mt-2 text-xl font-bold text-[#0ABFBC]">{formatDuration(totalStats.duration)}</p>
 				</div>
-				<div class="rounded-2xl bg-white p-5 shadow-sm">
+				<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Swims</p>
-					<p class="mt-2 text-xl font-bold text-[#0D1B4B]">{totalStats.activities}</p>
+					<p class="mt-2 text-xl font-bold text-[#0D1B4B] dark:text-white">{totalStats.activities}</p>
 				</div>
-				<div class="rounded-2xl bg-white p-5 shadow-sm">
+				<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Avg Pace</p>
 					<p class="mt-2 text-xl font-bold text-[#FF6B6B]">{totalStats.avgPace}</p>
 				</div>
-				<div class="rounded-2xl bg-white p-5 shadow-sm">
+				<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 					<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Total Calories</p>
 					<p class="mt-2 text-xl font-bold text-[#2ECC71]">
 						{totalStats.calories.toLocaleString()} kcal
@@ -237,12 +237,12 @@
 
 		<!-- Log swim form -->
 		{#if state.showForm}
-			<div class="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-				<h2 class="mb-5 text-lg font-bold text-[#0D1B4B]">Log New Swim</h2>
+			<div class="mb-6 rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
+				<h2 class="mb-5 text-lg font-bold text-[#0D1B4B] dark:text-white">Log New Swim</h2>
 				<div class="space-y-4">
 					<div class="grid grid-cols-2 gap-4">
 						<div>
-							<label for="log-distance" class="block text-sm font-medium text-gray-700"
+							<label for="log-distance" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
 								>Distance (meters)</label
 							>
 							<input
@@ -252,11 +252,11 @@
 								min="0"
 								step="100"
 								placeholder="e.g., 1000"
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							/>
 						</div>
 						<div>
-							<label for="log-duration" class="block text-sm font-medium text-gray-700"
+							<label for="log-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
 								>Duration (minutes)</label
 							>
 							<input
@@ -266,40 +266,40 @@
 								min="0"
 								step="5"
 								placeholder="e.g., 30"
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							/>
 						</div>
 					</div>
 					<div class="grid grid-cols-2 gap-4">
 						<div>
-							<label for="log-date" class="block text-sm font-medium text-gray-700">Date</label>
+							<label for="log-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
 							<input
 								id="log-date"
 								type="date"
 								bind:value={state.newActivity.date}
 								max={today}
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							/>
 						</div>
 						<div>
-							<label for="log-time" class="block text-sm font-medium text-gray-700">Time</label>
+							<label for="log-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Time</label>
 							<input
 								id="log-time"
 								type="time"
 								bind:value={state.newActivity.time}
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							/>
 						</div>
 					</div>
 					<div class="grid grid-cols-2 gap-4">
 						<div>
-							<label for="log-swim-style" class="block text-sm font-medium text-gray-700"
+							<label for="log-swim-style" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
 								>Swim Style</label
 							>
 							<select
 								id="log-swim-style"
 								bind:value={state.newActivity.swimStyle}
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							>
 								<option value="freestyle">Freestyle</option>
 								<option value="breaststroke">Breaststroke</option>
@@ -309,13 +309,13 @@
 							</select>
 						</div>
 						<div>
-							<label for="log-pool-size" class="block text-sm font-medium text-gray-700"
+							<label for="log-pool-size" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
 								>Pool Size</label
 							>
 							<select
 								id="log-pool-size"
 								bind:value={state.newActivity.poolSize}
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							>
 								<option value={25}>25 m</option>
 								<option value={50}>50 m</option>
@@ -324,7 +324,7 @@
 						</div>
 					</div>
 					<div>
-						<label for="log-notes" class="block text-sm font-medium text-gray-700"
+						<label for="log-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
 							>Notes (optional)</label
 						>
 						<input
@@ -332,7 +332,7 @@
 							type="text"
 							bind:value={state.newActivity.notes}
 							placeholder="e.g., Morning swim, felt great"
-							class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+							class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 						/>
 					</div>
 					<button
@@ -349,18 +349,18 @@
 		{#if state.loading}
 			<p class="text-center text-sm text-gray-400">Loading activities…</p>
 		{:else if visibleActivities.length === 0}
-			<div class="rounded-2xl bg-white p-10 text-center shadow-sm">
+			<div class="rounded-2xl bg-white p-10 text-center shadow-sm dark:bg-gray-800">
 				<div class="mb-3 text-4xl">🏊</div>
 				<p class="text-gray-400">No swims logged yet. Log your first swim to get started!</p>
 			</div>
 		{:else}
 			<div class="space-y-4">
 				{#each visibleActivities as activity}
-					<div class="rounded-2xl bg-white p-6 shadow-sm">
+					<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 						<!-- Header -->
 						<div class="mb-3 flex items-start justify-between">
 							<div>
-								<h3 class="text-lg font-bold text-[#0D1B4B]">
+								<h3 class="text-lg font-bold text-[#0D1B4B] dark:text-white">
 									{formatDistance(activity.distance)}
 								</h3>
 								<p class="text-sm text-gray-400">{formatDate(activity.date)}</p>
@@ -395,26 +395,26 @@
 						</div>
 
 						{#if activity.notes}
-							<div class="mb-3 rounded-xl bg-[#F0F4FF] p-3">
-								<p class="text-sm text-gray-600">{activity.notes}</p>
+							<div class="mb-3 rounded-xl bg-[#F0F4FF] p-3 dark:bg-gray-700">
+								<p class="text-sm text-gray-600 dark:text-gray-400">{activity.notes}</p>
 							</div>
 						{/if}
 
 						<!-- Stats row -->
 						<div class="grid grid-cols-3 gap-3 text-center">
-							<div class="rounded-xl bg-[#F0F4FF] py-3">
+							<div class="rounded-xl bg-[#F0F4FF] py-3 dark:bg-gray-700">
 								<p class="text-xs text-gray-400">⏱️ Pace</p>
 								<p class="text-sm font-semibold text-[#1F41BB]">
 									{calcPace100m(activity.distance, activity.duration)}
 								</p>
 							</div>
-							<div class="rounded-xl bg-[#F0F4FF] py-3">
+							<div class="rounded-xl bg-[#F0F4FF] py-3 dark:bg-gray-700">
 								<p class="text-xs text-gray-400">Speed</p>
 								<p class="text-sm font-semibold text-[#0ABFBC]">
 									{calcSpeed(activity.distance, activity.duration)}
 								</p>
 							</div>
-							<div class="rounded-xl bg-[#F0F4FF] py-3">
+							<div class="rounded-xl bg-[#F0F4FF] py-3 dark:bg-gray-700">
 								<p class="text-xs text-gray-400">🔥 Calories</p>
 								<p class="text-sm font-semibold text-[#FF6B6B]">
 									{calcCalories(activity.duration)} kcal

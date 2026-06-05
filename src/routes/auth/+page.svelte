@@ -139,7 +139,7 @@
 
 	<!-- Right panel: form -->
 	<div
-		class="flex w-full flex-col items-center justify-center bg-[#F0F4FF] px-6 py-12 md:w-1/2"
+		class="flex w-full flex-col items-center justify-center bg-[#F0F4FF] px-6 py-12 dark:bg-gray-900 md:w-1/2"
 	>
 		<!-- Mobile logo (small screens only) -->
 		<div class="mb-8 md:hidden">
@@ -148,15 +148,15 @@
 
 		<div class="w-full max-w-md">
 			<!-- Form card -->
-			<div class="rounded-2xl bg-white p-8 shadow-xl">
+			<div class="rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-800">
 				<!-- Tab switcher -->
-				<div class="mb-6 flex rounded-xl bg-[#F0F4FF] p-1">
+				<div class="mb-6 flex rounded-xl bg-[#F0F4FF] p-1 dark:bg-gray-700">
 					<button
 						onclick={() => switchTab('login')}
 						class={`flex-1 rounded-lg py-2 text-sm font-semibold transition ${
 							state.activeTab === 'login'
 								? 'bg-[#1F41BB] text-white shadow-md'
-								: 'text-gray-500 hover:text-gray-700'
+								: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
 						}`}
 					>
 						Login
@@ -166,7 +166,7 @@
 						class={`flex-1 rounded-lg py-2 text-sm font-semibold transition ${
 							state.activeTab === 'register'
 								? 'bg-[#1F41BB] text-white shadow-md'
-								: 'text-gray-500 hover:text-gray-700'
+								: 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
 						}`}
 					>
 						Register
@@ -174,12 +174,12 @@
 				</div>
 
 				{#if state.errorMessage}
-					<div class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+					<div class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
 						{state.errorMessage}
 					</div>
 				{/if}
 				{#if state.successMessage}
-					<div class="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
+					<div class="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
 						{state.successMessage}
 					</div>
 				{/if}
@@ -187,7 +187,7 @@
 				{#if state.activeTab === 'login'}
 					<div class="space-y-4">
 						<div>
-							<label for="login-email" class="block text-sm font-medium text-[#0D1B4B]"
+							<label for="login-email" class="block text-sm font-medium text-[#0D1B4B] dark:text-gray-200"
 								>Email</label
 							>
 							<input
@@ -195,11 +195,11 @@
 								type="email"
 								bind:value={state.loginEmail}
 								placeholder="Enter your email"
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							/>
 						</div>
 						<div>
-							<label for="login-password" class="block text-sm font-medium text-[#0D1B4B]"
+							<label for="login-password" class="block text-sm font-medium text-[#0D1B4B] dark:text-gray-200"
 								>Password</label
 							>
 							<input
@@ -207,7 +207,7 @@
 								type="password"
 								bind:value={state.loginPassword}
 								placeholder="Enter your password"
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							/>
 						</div>
 						<button
@@ -221,7 +221,7 @@
 				{:else}
 					<div class="space-y-4">
 						<div>
-							<label for="reg-username" class="block text-sm font-medium text-[#0D1B4B]"
+							<label for="reg-username" class="block text-sm font-medium text-[#0D1B4B] dark:text-gray-200"
 								>Username</label
 							>
 							<input
@@ -229,21 +229,21 @@
 								type="text"
 								bind:value={state.registerUsername}
 								placeholder="Choose a username"
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							/>
 						</div>
 						<div>
-							<label for="reg-email" class="block text-sm font-medium text-[#0D1B4B]">Email</label>
+							<label for="reg-email" class="block text-sm font-medium text-[#0D1B4B] dark:text-gray-200">Email</label>
 							<input
 								id="reg-email"
 								type="email"
 								bind:value={state.registerEmail}
 								placeholder="Enter your email"
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							/>
 						</div>
 						<div>
-							<label for="reg-password" class="block text-sm font-medium text-[#0D1B4B]"
+							<label for="reg-password" class="block text-sm font-medium text-[#0D1B4B] dark:text-gray-200"
 								>Password</label
 							>
 							<input
@@ -251,11 +251,11 @@
 								type="password"
 								bind:value={state.registerPassword}
 								placeholder="Min. 6 characters"
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							/>
 						</div>
 						<div>
-							<label for="reg-confirm" class="block text-sm font-medium text-[#0D1B4B]"
+							<label for="reg-confirm" class="block text-sm font-medium text-[#0D1B4B] dark:text-gray-200"
 								>Confirm Password</label
 							>
 							<input
@@ -263,17 +263,17 @@
 								type="password"
 								bind:value={state.registerConfirmPassword}
 								placeholder="Repeat your password"
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							/>
 						</div>
 						<div>
-							<label for="reg-skill" class="block text-sm font-medium text-[#0D1B4B]"
+							<label for="reg-skill" class="block text-sm font-medium text-[#0D1B4B] dark:text-gray-200"
 								>Skill Level</label
 							>
 							<select
 								id="reg-skill"
 								bind:value={state.registerSkillLevel}
-								class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+								class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 							>
 								<option value="beginner">Beginner</option>
 								<option value="intermediate">Intermediate</option>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { darkMode } from '$lib/stores/theme';
 
 	interface ProfileData {
 		_id: string;
@@ -186,10 +187,10 @@
 		</div>
 
 		{#if state.errorMessage}
-			<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{state.errorMessage}</div>
+			<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">{state.errorMessage}</div>
 		{/if}
 		{#if state.successMessage}
-			<div class="mb-4 rounded-xl bg-green-50 p-4 text-sm text-green-700">
+			<div class="mb-4 rounded-xl bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
 				{state.successMessage}
 			</div>
 		{/if}
@@ -206,7 +207,7 @@
 			<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				<!-- Left column: avatar + monthly progress -->
 				<div class="space-y-4">
-					<div class="rounded-2xl bg-white p-6 shadow-sm">
+					<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 						<div class="flex flex-col items-center">
 							{#if state.profile.profilePicture}
 								<img
@@ -224,7 +225,7 @@
 
 							<label
 								for="profile-pic"
-								class="mt-3 cursor-pointer rounded-lg bg-[#F0F4FF] px-4 py-2 text-sm font-medium text-[#1F41BB] transition hover:bg-blue-100"
+								class="mt-3 cursor-pointer rounded-lg bg-[#F0F4FF] px-4 py-2 text-sm font-medium text-[#1F41BB] transition hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-gray-600"
 							>
 								{state.uploading ? 'Uploading…' : 'Change Photo'}
 							</label>
@@ -238,18 +239,18 @@
 						</div>
 
 						<div class="mt-5 text-center">
-							<h2 class="text-xl font-bold text-[#0D1B4B]">{state.profile.username}</h2>
-							<p class="mt-1 text-sm capitalize text-gray-500">{state.profile.skillLevel}</p>
+							<h2 class="text-xl font-bold text-[#0D1B4B] dark:text-white">{state.profile.username}</h2>
+							<p class="mt-1 text-sm capitalize text-gray-500 dark:text-gray-400">{state.profile.skillLevel}</p>
 							<p class="mt-1 text-xs text-gray-400">{state.profile.email}</p>
 						</div>
 					</div>
 
 					<!-- Monthly improvement -->
-					<div class="rounded-2xl bg-white p-5 shadow-sm">
+					<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 						<p class="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">
 							Monthly Progress
 						</p>
-						<p class="text-2xl font-bold text-[#0D1B4B]">
+						<p class="text-2xl font-bold text-[#0D1B4B] dark:text-white">
 							{formatDistance(state.profile.stats.thisMonthDistance)}
 						</p>
 						<p class="mt-0.5 text-xs text-gray-400">this month</p>
@@ -274,25 +275,25 @@
 				<div class="space-y-6 lg:col-span-2">
 					<!-- Swim stats -->
 					<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-						<div class="rounded-2xl bg-white p-5 shadow-sm">
+						<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 							<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Distance</p>
 							<p class="mt-2 text-2xl font-bold text-[#1F41BB]">
 								{formatDistance(state.profile.stats.totalDistance)}
 							</p>
 						</div>
-						<div class="rounded-2xl bg-white p-5 shadow-sm">
+						<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 							<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Duration</p>
 							<p class="mt-2 text-2xl font-bold text-[#0ABFBC]">
 								{formatDuration(state.profile.stats.totalDuration)}
 							</p>
 						</div>
-						<div class="rounded-2xl bg-white p-5 shadow-sm">
+						<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 							<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Swims</p>
-							<p class="mt-2 text-2xl font-bold text-[#0D1B4B]">
+							<p class="mt-2 text-2xl font-bold text-[#0D1B4B] dark:text-white">
 								{state.profile.stats.totalSwims}
 							</p>
 						</div>
-						<div class="rounded-2xl bg-white p-5 shadow-sm">
+						<div class="rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-800">
 							<p class="text-xs font-medium uppercase tracking-wide text-gray-400">Battles</p>
 							<p class="mt-2 text-2xl font-bold text-[#FF6B6B]">
 								{state.profile.stats.battleCount}
@@ -301,25 +302,25 @@
 					</div>
 
 					<!-- Battle record -->
-					<div class="rounded-2xl bg-white p-6 shadow-sm">
+					<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 						<h3 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
 							Battle Record
 						</h3>
 						<div class="grid grid-cols-3 gap-4">
-							<div class="rounded-xl bg-green-50 p-4 text-center">
-								<p class="text-xs font-medium text-green-600">Won</p>
+							<div class="rounded-xl bg-green-50 p-4 text-center dark:bg-green-900/20">
+								<p class="text-xs font-medium text-green-600 dark:text-green-400">Won</p>
 								<p class="mt-1 text-2xl font-bold text-[#2ECC71]">
 									{state.profile.stats.battlesWon}
 								</p>
 							</div>
-							<div class="rounded-xl bg-red-50 p-4 text-center">
-								<p class="text-xs font-medium text-red-500">Lost</p>
+							<div class="rounded-xl bg-red-50 p-4 text-center dark:bg-red-900/20">
+								<p class="text-xs font-medium text-red-500 dark:text-red-400">Lost</p>
 								<p class="mt-1 text-2xl font-bold text-[#FF6B6B]">
 									{state.profile.stats.battlesLost}
 								</p>
 							</div>
-							<div class="rounded-xl bg-[#F0F4FF] p-4 text-center">
-								<p class="text-xs font-medium text-gray-500">Win Rate</p>
+							<div class="rounded-xl bg-[#F0F4FF] p-4 text-center dark:bg-gray-700">
+								<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Win Rate</p>
 								<p class="mt-1 text-2xl font-bold text-[#1F41BB]">
 									{state.profile.stats.winRate}%
 								</p>
@@ -328,21 +329,21 @@
 					</div>
 
 					<!-- Personal bests -->
-					<div class="rounded-2xl bg-white p-6 shadow-sm">
+					<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 						<h3 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
 							Personal Bests
 						</h3>
 						<div class="grid grid-cols-2 gap-4">
-							<div class="rounded-xl bg-[#F0F4FF] p-4">
-								<p class="text-xs font-medium text-gray-500">Best Single Distance</p>
+							<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
+								<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Best Single Distance</p>
 								<p class="mt-1 text-xl font-bold text-[#1F41BB]">
 									{state.profile.stats.personalBestDistance > 0
 										? formatDistance(state.profile.stats.personalBestDistance)
 										: '—'}
 								</p>
 							</div>
-							<div class="rounded-xl bg-[#F0F4FF] p-4">
-								<p class="text-xs font-medium text-gray-500">Best Pace</p>
+							<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
+								<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Best Pace</p>
 								<p class="mt-1 text-xl font-bold text-[#0ABFBC]">
 									{formatPace(state.profile.stats.personalBestPace)}
 								</p>
@@ -351,28 +352,28 @@
 					</div>
 
 					<!-- Edit form -->
-					<div class="rounded-2xl bg-white p-6 shadow-sm">
-						<h3 class="mb-5 text-lg font-bold text-[#0D1B4B]">Edit Profile</h3>
+					<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
+						<h3 class="mb-5 text-lg font-bold text-[#0D1B4B] dark:text-white">Edit Profile</h3>
 						<div class="space-y-4">
 							<div>
-								<label for="edit-username" class="block text-sm font-medium text-gray-700"
+								<label for="edit-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
 									>Username</label
 								>
 								<input
 									id="edit-username"
 									type="text"
 									bind:value={state.editUsername}
-									class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+									class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 								/>
 							</div>
 							<div>
-								<label for="edit-skill" class="block text-sm font-medium text-gray-700"
+								<label for="edit-skill" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
 									>Skill Level</label
 								>
 								<select
 									id="edit-skill"
 									bind:value={state.editSkillLevel}
-									class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+									class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 								>
 									{#each skillLevels as level}
 										<option value={level}
@@ -381,6 +382,30 @@
 									{/each}
 								</select>
 							</div>
+
+							<!-- Dark mode toggle -->
+							<div class="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+								<div>
+									<p class="text-sm font-medium text-gray-700 dark:text-gray-300">Dark Mode</p>
+									<p class="text-xs text-gray-400">Toggle dark theme</p>
+								</div>
+								<button
+									role="switch"
+									aria-label="Toggle dark mode"
+									aria-checked={$darkMode}
+									onclick={() => darkMode.update((v) => !v)}
+									class={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+										$darkMode ? 'bg-[#1F41BB]' : 'bg-gray-200 dark:bg-gray-600'
+									}`}
+								>
+									<span
+										class={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
+											$darkMode ? 'translate-x-5' : 'translate-x-0'
+										}`}
+									></span>
+								</button>
+							</div>
+
 							<button
 								onclick={saveProfile}
 								disabled={state.saving}

@@ -405,17 +405,17 @@
 		</div>
 
 		{#if state.errorMessage}
-			<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{state.errorMessage}</div>
+			<div class="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">{state.errorMessage}</div>
 		{/if}
 		{#if state.successMessage}
-			<div class="mb-4 rounded-xl bg-green-50 p-4 text-sm text-green-700">
+			<div class="mb-4 rounded-xl bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
 				{state.successMessage}
 			</div>
 		{/if}
 
 		<div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
 			<!-- Opponent list -->
-			<div class="rounded-2xl bg-white p-6 shadow-sm lg:col-span-1">
+			<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800 lg:col-span-1">
 				<h2 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
 					Select Opponent
 				</h2>
@@ -432,7 +432,7 @@
 								class={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition ${
 									state.selectedOpponent?._id === user._id
 										? 'bg-[#1F41BB] text-white'
-										: 'bg-[#F0F4FF] text-gray-700 hover:bg-blue-100'
+										: 'bg-[#F0F4FF] text-gray-700 hover:bg-blue-100 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
 								}`}
 							>
 								{#if user.profilePicture}
@@ -465,17 +465,17 @@
 			<!-- Battle panel -->
 			<div class="space-y-6 lg:col-span-3">
 				{#if state.loadingOpponent}
-					<div class="rounded-2xl bg-white p-10 text-center shadow-sm">
+					<div class="rounded-2xl bg-white p-10 text-center shadow-sm dark:bg-gray-800">
 						<p class="text-sm text-gray-400">Loading battle data…</p>
 					</div>
 				{:else if state.selectedOpponent && state.opponentStats}
 					{#if state.activeBattle}
 						<!-- ── Active Battle View ── -->
-						<div class="rounded-2xl bg-white p-6 shadow-sm">
+						<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 							<!-- Battle header with actions -->
 							<div class="mb-5 flex items-start justify-between gap-4">
 								<div>
-									<h2 class="text-lg font-bold text-[#0D1B4B]">
+									<h2 class="text-lg font-bold text-[#0D1B4B] dark:text-white">
 										vs {state.selectedOpponent.username}
 									</h2>
 									<p class="text-sm text-gray-400">
@@ -487,7 +487,7 @@
 									<button
 										onclick={refreshData}
 										disabled={state.refreshing}
-										class="rounded-xl bg-[#F0F4FF] px-3 py-2 text-xs font-medium text-[#1F41BB] transition hover:bg-blue-100 disabled:opacity-50"
+										class="rounded-xl bg-[#F0F4FF] px-3 py-2 text-xs font-medium text-[#1F41BB] transition hover:bg-blue-100 disabled:opacity-50 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600"
 										title="Refresh battle data"
 									>
 										{state.refreshing ? '↻…' : '↻ Refresh'}
@@ -496,7 +496,7 @@
 									{#if !state.showEndConfirm}
 										<button
 											onclick={() => (state.showEndConfirm = true)}
-											class="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-500 transition hover:bg-red-100"
+											class="rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-500 transition hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
 										>
 											End Battle
 										</button>
@@ -507,9 +507,9 @@
 							<!-- End battle confirmation -->
 							{#if state.showEndConfirm}
 								<div
-									class="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4"
+									class="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20"
 								>
-									<p class="flex-1 text-sm font-medium text-red-800">
+									<p class="flex-1 text-sm font-medium text-red-800 dark:text-red-300">
 										Are you sure you want to end this battle?
 									</p>
 									<button
@@ -520,7 +520,7 @@
 									</button>
 									<button
 										onclick={() => (state.showEndConfirm = false)}
-										class="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+										class="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
 									>
 										Cancel
 									</button>
@@ -530,10 +530,10 @@
 							<!-- Bet banner -->
 							{#if state.activeBattle.bet}
 								<div
-									class="mb-5 flex items-center gap-2 rounded-xl bg-yellow-50 px-4 py-3 text-sm"
+									class="mb-5 flex items-center gap-2 rounded-xl bg-yellow-50 px-4 py-3 text-sm dark:bg-yellow-900/20"
 								>
 									<span class="text-base">💰</span>
-									<span class="font-semibold text-yellow-800">{state.activeBattle.bet}</span>
+									<span class="font-semibold text-yellow-800 dark:text-yellow-200">{state.activeBattle.bet}</span>
 								</div>
 							{/if}
 
@@ -580,7 +580,7 @@
 											</div>
 										{/if}
 										<div>
-											<div class="text-sm font-semibold text-[#0D1B4B]">
+											<div class="text-sm font-semibold text-[#0D1B4B] dark:text-white">
 												{state.selectedOpponent.username}
 											</div>
 											<div class="text-xs font-medium text-[#FF6B6B]">
@@ -590,7 +590,7 @@
 									</div>
 									<div class="flex items-center gap-2">
 										<div class="text-right">
-											<div class="text-sm font-semibold text-[#0D1B4B]">
+											<div class="text-sm font-semibold text-[#0D1B4B] dark:text-white">
 												{state.userName}
 												<span class="text-xs font-normal text-gray-400">(You)</span>
 											</div>
@@ -618,7 +618,7 @@
 									></div>
 									<!-- Marker -->
 									<div
-										class="absolute top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-xl ring-2 ring-gray-200 transition-all duration-700"
+										class="absolute top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-xl ring-2 ring-gray-200 transition-all duration-700 dark:ring-gray-600"
 										style="left: {sliderPct}%;"
 									></div>
 								</div>
@@ -630,7 +630,7 @@
 								</div>
 
 								<!-- Status text -->
-								<div class="mt-3 text-center text-xs text-gray-500">
+								<div class="mt-3 text-center text-xs text-gray-500 dark:text-gray-400">
 									{#if lead > 0}
 										You lead by
 										<span class="font-semibold text-[#1F41BB]">{formatDistance(lead)}</span>
@@ -668,7 +668,7 @@
 						</div>
 
 						<!-- Recent activities -->
-						<div class="rounded-2xl bg-white p-6 shadow-sm">
+						<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 							<h2 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
 								Recent Activities
 							</h2>
@@ -680,14 +680,14 @@
 										<div
 											class={`rounded-xl p-3 text-sm ${
 												activity.userName === state.userName
-													? 'border-l-4 border-[#1F41BB] bg-[#F0F4FF]'
-													: 'border-l-4 border-[#FF6B6B] bg-[#FFF5F5]'
+													? 'border-l-4 border-[#1F41BB] bg-[#F0F4FF] dark:bg-gray-700'
+													: 'border-l-4 border-[#FF6B6B] bg-[#FFF5F5] dark:bg-red-900/20'
 											}`}
 										>
 											<div class="flex items-start justify-between">
 												<div>
-													<div class="font-semibold text-[#0D1B4B]">{activity.userName}</div>
-													<div class="text-gray-500">
+													<div class="font-semibold text-[#0D1B4B] dark:text-white">{activity.userName}</div>
+													<div class="text-gray-500 dark:text-gray-400">
 														{formatDistance(activity.distance)} · {formatDuration(activity.duration)}
 													</div>
 													{#if activity.notes}
@@ -703,8 +703,8 @@
 						</div>
 					{:else}
 						<!-- ── No Active Battle ── -->
-						<div class="rounded-2xl bg-white p-6 shadow-sm">
-							<h2 class="mb-1 text-lg font-bold text-[#0D1B4B]">
+						<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
+							<h2 class="mb-1 text-lg font-bold text-[#0D1B4B] dark:text-white">
 								Challenge {state.selectedOpponent.username}
 							</h2>
 							<p class="mb-6 text-sm text-gray-400">
@@ -712,7 +712,7 @@
 							</p>
 							<div class="space-y-5">
 								<div>
-									<label for="battle-goal" class="block text-sm font-medium text-gray-700">
+									<label for="battle-goal" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
 										Distance Goal (meters)
 									</label>
 									<input
@@ -722,7 +722,7 @@
 										min="100"
 										step="100"
 										placeholder="e.g. 50000 = 50 km"
-										class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+										class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 									/>
 									{#if state.newBattle.distanceGoalMeters > 0}
 										<p class="mt-1 text-xs text-gray-400">
@@ -735,7 +735,7 @@
 									{/if}
 								</div>
 								<div>
-									<label for="battle-bet" class="block text-sm font-medium text-gray-700">
+									<label for="battle-bet" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
 										Bet (optional)
 									</label>
 									<input
@@ -743,7 +743,7 @@
 										type="text"
 										bind:value={state.newBattle.bet}
 										placeholder="e.g. Loser buys lunch"
-										class="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20"
+										class="mt-1 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-[#1F41BB] focus:outline-none focus:ring-2 focus:ring-[#1F41BB]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
 									/>
 								</div>
 								<button
@@ -757,7 +757,7 @@
 						</div>
 
 						<!-- Opponent stats -->
-						<div class="rounded-2xl bg-white p-6 shadow-sm">
+						<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 							<div class="mb-4 flex items-center gap-3">
 								{#if state.opponentStats.opponent.profilePicture}
 									<img
@@ -773,26 +773,26 @@
 									</div>
 								{/if}
 								<div>
-									<h2 class="text-base font-bold text-[#0D1B4B]">
+									<h2 class="text-base font-bold text-[#0D1B4B] dark:text-white">
 										{state.selectedOpponent.username}
 									</h2>
 									<p class="text-xs capitalize text-gray-400">{state.selectedOpponent.skillLevel}</p>
 								</div>
 							</div>
 							<div class="grid grid-cols-3 gap-3">
-								<div class="rounded-xl bg-[#F0F4FF] p-4 text-center">
+								<div class="rounded-xl bg-[#F0F4FF] p-4 text-center dark:bg-gray-700">
 									<p class="text-xs text-gray-400">Distance</p>
 									<p class="mt-1 text-lg font-bold text-[#0ABFBC]">
 										{formatDistance(state.opponentStats.stats.totalDistance)}
 									</p>
 								</div>
-								<div class="rounded-xl bg-[#F0F4FF] p-4 text-center">
+								<div class="rounded-xl bg-[#F0F4FF] p-4 text-center dark:bg-gray-700">
 									<p class="text-xs text-gray-400">Duration</p>
 									<p class="mt-1 text-lg font-bold text-[#0ABFBC]">
 										{formatDuration(state.opponentStats.stats.totalDuration)}
 									</p>
 								</div>
-								<div class="rounded-xl bg-[#F0F4FF] p-4 text-center">
+								<div class="rounded-xl bg-[#F0F4FF] p-4 text-center dark:bg-gray-700">
 									<p class="text-xs text-gray-400">Swims</p>
 									<p class="mt-1 text-lg font-bold text-[#0ABFBC]">
 										{state.opponentStats.stats.activityCount}
@@ -803,11 +803,11 @@
 
 						<!-- Battle History -->
 						{#if state.loadingHistory}
-							<div class="rounded-2xl bg-white p-6 shadow-sm">
+							<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 								<p class="text-center text-sm text-gray-400">Loading history…</p>
 							</div>
 						{:else if state.battleHistory.length > 0}
-							<div class="rounded-2xl bg-white p-6 shadow-sm">
+							<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 								<h2 class="mb-4 text-xs font-bold uppercase tracking-wide text-gray-400">
 									Battle History
 								</h2>
@@ -819,13 +819,13 @@
 											class={`rounded-xl p-4 text-sm ${
 												hasWinner
 													? youWon
-														? 'border border-[#2ECC71]/30 bg-green-50'
-														: 'border border-[#FF6B6B]/30 bg-red-50'
-													: 'bg-[#F0F4FF]'
+														? 'border border-[#2ECC71]/30 bg-green-50 dark:bg-green-900/20'
+														: 'border border-[#FF6B6B]/30 bg-red-50 dark:bg-red-900/20'
+													: 'bg-[#F0F4FF] dark:bg-gray-700'
 											}`}
 										>
 											<div class="mb-2 flex items-center justify-between">
-												<span class="font-semibold text-[#0D1B4B]">
+												<span class="font-semibold text-[#0D1B4B] dark:text-white">
 													{#if hasWinner}
 														{youWon ? '🏆 You Won' : '😔 You Lost'}
 													{:else}
@@ -838,15 +838,15 @@
 													>
 												{/if}
 											</div>
-											<div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+											<div class="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
 												<div>
-													Goal: <span class="font-medium text-[#0D1B4B]"
+													Goal: <span class="font-medium text-[#0D1B4B] dark:text-gray-200"
 														>{formatDistance(battle.distanceGoal)} lead</span
 													>
 												</div>
 												{#if battle.bet}
 													<div>
-														Bet: <span class="font-medium text-yellow-700">{battle.bet}</span>
+														Bet: <span class="font-medium text-yellow-700 dark:text-yellow-400">{battle.bet}</span>
 													</div>
 												{/if}
 												<div>
@@ -867,7 +867,7 @@
 						{/if}
 					{/if}
 				{:else if !state.selectedOpponent}
-					<div class="rounded-2xl bg-white p-10 text-center shadow-sm">
+					<div class="rounded-2xl bg-white p-10 text-center shadow-sm dark:bg-gray-800">
 						<div class="mb-3 text-5xl">⚔️</div>
 						<p class="text-gray-400">Select an opponent to start a battle</p>
 					</div>

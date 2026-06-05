@@ -136,18 +136,18 @@
 
 		<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 			<!-- Calendar -->
-			<div class="rounded-2xl bg-white p-6 shadow-sm lg:col-span-2">
+			<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800 lg:col-span-2">
 				<div class="mb-6 flex items-center justify-between">
 					<button
 						onclick={previousMonth}
-						class="rounded-xl bg-[#F0F4FF] px-4 py-2 text-sm font-medium text-[#1F41BB] transition hover:bg-blue-100"
+						class="rounded-xl bg-[#F0F4FF] px-4 py-2 text-sm font-medium text-[#1F41BB] transition hover:bg-blue-100 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600"
 					>
 						← Prev
 					</button>
-					<h2 class="text-lg font-bold text-[#0D1B4B]">{monthName}</h2>
+					<h2 class="text-lg font-bold text-[#0D1B4B] dark:text-white">{monthName}</h2>
 					<button
 						onclick={nextMonth}
-						class="rounded-xl bg-[#F0F4FF] px-4 py-2 text-sm font-medium text-[#1F41BB] transition hover:bg-blue-100"
+						class="rounded-xl bg-[#F0F4FF] px-4 py-2 text-sm font-medium text-[#1F41BB] transition hover:bg-blue-100 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600"
 					>
 						Next →
 					</button>
@@ -163,7 +163,7 @@
 
 						{#each paddedDays as day}
 							{#if day === null}
-								<div class="rounded-xl bg-gray-50 p-2 opacity-0"></div>
+								<div class="rounded-xl bg-gray-50 p-2 opacity-0 dark:bg-gray-700/30"></div>
 							{:else}
 								{@const dateStr = getDateString(day)}
 								{@const dayData = state.events.get(dateStr)}
@@ -176,7 +176,7 @@
 									} ${
 										dayData
 											? 'bg-gradient-to-br from-[#1F41BB] to-[#0ABFBC] text-white shadow-sm'
-											: 'bg-[#F0F4FF] text-gray-600 hover:bg-blue-100'
+											: 'bg-[#F0F4FF] text-gray-600 hover:bg-blue-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
 									}`}
 								>
 									<div class="text-sm font-semibold">{day}</div>
@@ -204,15 +204,15 @@
 			</div>
 
 			<!-- Day detail panel -->
-			<div class="rounded-2xl bg-white p-6 shadow-sm">
+			<div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-gray-800">
 				{#if state.selectedDay && state.selectedDayActivities}
-					<h3 class="mb-4 text-base font-bold text-[#0D1B4B]">{formatDate(state.selectedDay)}</h3>
+					<h3 class="mb-4 text-base font-bold text-[#0D1B4B] dark:text-white">{formatDate(state.selectedDay)}</h3>
 					<div class="space-y-3">
 						{#each state.selectedDayActivities.activities as activity (activity._id)}
-							<div class="rounded-xl bg-[#F0F4FF] p-4">
+							<div class="rounded-xl bg-[#F0F4FF] p-4 dark:bg-gray-700">
 								<div class="flex items-start justify-between">
 									<div>
-										<p class="font-semibold text-[#0D1B4B]">{formatDistance(activity.distance)}</p>
+										<p class="font-semibold text-[#0D1B4B] dark:text-white">{formatDistance(activity.distance)}</p>
 										<p class="text-sm text-gray-400">{formatDuration(activity.duration)}</p>
 									</div>
 									<div class="text-right text-xs text-gray-400">
@@ -225,14 +225,14 @@
 							</div>
 						{/each}
 					</div>
-					<div class="mt-4 space-y-2 border-t pt-4">
+					<div class="mt-4 space-y-2 border-t pt-4 dark:border-gray-700">
 						<div class="flex justify-between text-sm">
 							<span class="text-gray-400">Day Total:</span>
-							<span class="font-semibold text-[#0D1B4B]">{formatDistance(dayTotal)}</span>
+							<span class="font-semibold text-[#0D1B4B] dark:text-white">{formatDistance(dayTotal)}</span>
 						</div>
 						<div class="flex justify-between text-sm">
 							<span class="text-gray-400">Day Duration:</span>
-							<span class="font-semibold text-[#0D1B4B]">{formatDuration(dayDuration)}</span>
+							<span class="font-semibold text-[#0D1B4B] dark:text-white">{formatDuration(dayDuration)}</span>
 						</div>
 					</div>
 				{:else}
