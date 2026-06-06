@@ -156,6 +156,27 @@ flowchart LR
 
 - **Entscheid:** Skizze 2 angepasst (direkter Spielervergleich mit Balken und Wette)
 
+- **Figma-Mockup (Mobile-First Entwurf):**
+
+  Tool: Figma (kostenlos, browserbasiert, interaktive Klick-Verbindungen)
+
+  Link: [Tidemark Figma Prototyp](https://www.figma.com/proto/l832VC7lrJmZrYmjXIbj88/Tidemark?node-id=0-1&t=WHQFVi8mltOCs599-1)
+
+  **Welcome Screen**
+  ![Welcome Screen](doc/welcomescreen.png)
+
+  **Login Screen**
+  ![Login Screen](doc/loginscreen.png)
+
+  **Register Screen**
+  ![Register Screen](doc/registerscreen.png)
+
+  **Battle Screen**
+  ![Battle Screen](doc/battlescreen.png)
+
+  **Calendar Screen**
+  ![Calendar Screen](doc/calenderscreen.png)
+
 ---
 
 ### 3.3 Decide
@@ -195,29 +216,7 @@ flowchart TD
     I --> J[Ergebnis in Battle-History & Profil]
 ```
 
-- **Mockup:**
 
-  Tool: Figma (kostenlos, browserbasiert, interaktive Klick-Verbindungen)
-
-  Link: [Tidemark Figma Prototyp](https://www.figma.com/proto/l832VC7lrJmZrYmjXIbj88/Tidemark?node-id=0-1&t=WHQFVi8mltOCs599-1)
-
-  Erstellte Screens:
-
-**Welcome Screen**
-![Welcome Screen](doc/welcomescreen.png)
-
-**Login Screen**
-![Login Screen](doc/loginscreen.png)
-
-**Register Screen**
-![Register Screen](doc/registerscreen.png)
-
-**Battle Screen**
-![Battle Screen](doc/battlescreen.png)
-
-**Calendar Screen**
-![Calendar Screen](doc/calenderscreen.png)
----
 
 ### 3.4 Prototype
 
@@ -241,7 +240,7 @@ flowchart TD
   **Login & Registrierung**
 
   ![Login Web](doc/loginweb.png)
-  *Split-Layout mit Logo links und Formular rechts. Dark Mode Toggle im Profil unter Edit Profile.*
+  *Split-Layout mit Logo links und Formular rechts. Login und Registrierung über Tab-Auswahl.*
 
   ---
 
@@ -249,9 +248,6 @@ flowchart TD
 
   ![Activity Log](doc/activitylogweb.png)
   *Übersicht aller Schwimmaktivitäten mit Gesamtstatistiken (Distanz, Dauer, Pace, Kalorien). Jede Aktivität zeigt Schwimmstil, Poolgrösse und berechnete Kennzahlen.*
-
-  ![Activity Log Dark](doc/activitylogwebdark.png)
-  *Dark Mode Ansicht des Activity Logs.*
 
   ![Activity Log Mobile](doc/mobileweb.png)
   *Mobile-Ansicht mit Bottom Navigation — ermöglicht schnelles Erfassen direkt nach dem Training.*
@@ -266,14 +262,8 @@ flowchart TD
   ![Battle erstellen](doc/challengecreate.png)
   *Gegner auswählen und Battle mit Zieldistanz und optionaler Wette erstellen.*
 
-  ![Battle erstellt](doc/challengecreate1.png)
-  *Aktives Battle mit animiertem Wellenbalken. Der Balken verschiebt sich relativ zur Zieldistanz.*
-
-  ![Battle Bar](doc/battlebarweb.png)
-  *Der animierte Wellenbalken zeigt den aktuellen Vorsprung oder Rückstand in Echtzeit.*
-
-  ![Battle Won](doc/battlebarwonweb.png)
-  *Bei Erreichen der Zieldistanz erscheint ein „You Win!" Banner mit goldenem Hintergrund.*
+  ![Aktives Battle](doc/challengecreate1.png)
+  *Aktives Battle vs. Yanis — Wellenbalken zeigt den aktuellen Stand. Refresh-Button zum manuellen Aktualisieren.*
 
   ---
 
@@ -281,9 +271,6 @@ flowchart TD
 
   ![Kalender Übersicht](doc/calenderweb.png)
   *Kalenderansicht mit markierten Schwimmtagen. Tage mit Aktivitäten zeigen Anzahl Swims und Gesamtdistanz.*
-
-  ![Kalender Einladung](doc/calendercreate1.png)
-  *Klick auf einen Tag öffnet die Tagesansicht mit „Invite to Swim on This Day"-Button.*
 
   ---
 
@@ -302,27 +289,6 @@ flowchart TD
   ![Swim Distance Diagramm](doc/diagrammweb.png)
   *Interaktives Liniendiagramm der Schwimmdistanz — umschaltbar zwischen 7 Tagen, 30 Tagen und 3 Monaten.*
 
-  ---
-
-  **Figma Mockup (Ursprüngliches Design)**
-
-  ![Welcome Screen Mockup](doc/welcomescreen.png)
-  *Figma Welcome Screen — ursprüngliches Mobile-First Design.*
-
-  ![Login Screen Mockup](doc/loginscreen.png)
-  *Figma Login Screen.*
-
-  ![Register Screen Mockup](doc/registerscreen.png)
-  *Figma Register Screen.*
-
-  ![Battle Screen Mockup](doc/battlescreen.png)
-  *Figma Battle Screen Mockup — ursprüngliches Konzept.*
-
-  ![Calendar Screen Mockup](doc/calenderscreen.png)
-  *Figma Calendar Screen Mockup.*
-
-  Link zum interaktiven Prototyp: [Tidemark Figma](https://www.figma.com/proto/l832VC7lrJmZrYmjXIbj88/Tidemark?node-id=0-1&t=WHQFVi8mltOCs599-1)
-
 - **Designentscheidungen:**
 
   | Entscheidung | Begründung |
@@ -331,8 +297,8 @@ flowchart TD
   | Dark Navy (#0D1B4B) als Sidebar-Hintergrund | Maritime Farbwelt die zum Thema Schwimmen, Meer und Wasser passt und die App von generischen Fitness-Apps abhebt. |
   | Animierter Wellenbalken im Battle | Der Balken soll spielerisch und dynamisch wirken. Durch die kontinuierliche Bewegung sieht der Nutzer jederzeit dass sich der Stand verschieben kann. So ist es Realitätsnäher als ein statischer Balken. |
   | Blau (#1F41BB) vs Teal (#0ABFBC) statt Blau vs Rot | Bewusste Abkehr vom Standard-Wettkampfschema. Die Farbkombination repräsentiert das Korallenriff und das Meer und gibt der App einen eigenen Charakter. |
-  | Achievements als ausgegraut/farbig | Orientiert an bekannten Gaming-Apps. Die ausgegrauten Badges zeigen dem Nutzer was er noch erreichen kann. Wer alle freischaltet wird mit einer vollständig farbigen Übersicht belohnt. |
-  | Monatliches Leaderboard auf der Battle-Seite | Das Leaderboard soll Nutzer direkt beim Aufruf der Battle-Seite motivieren selbst zu schwimmen und ein Battle zu starten um im Ranking zu erscheinen. |
+  | Achievements als ausgegraut/farbig *(Erweiterung 4.3)* | Orientiert an bekannten Gaming-Apps. Die ausgegrauten Badges zeigen dem Nutzer was er noch erreichen kann. Wer alle freischaltet wird mit einer vollständig farbigen Übersicht belohnt. |
+  | Monatliches Leaderboard auf der Battle-Seite *(Erweiterung 4.4)* | Das Leaderboard soll Nutzer direkt beim Aufruf der Battle-Seite motivieren selbst zu schwimmen und ein Battle zu starten um im Ranking zu erscheinen. |
 
 #### 3.4.2 Umsetzung (Technik)
 
@@ -623,6 +589,9 @@ flowchart TD
 
 ![Battle Bar animiert](doc/battlebarweb.png)
 *Der animierte Wellenbalken verschiebt sich kontinuierlich und zeigt den relativen Vorsprung.*
+
+![Battle Won](doc/battlebarwonweb.png)
+*Bei Erreichen der Zieldistanz erscheint ein „You Win!" Banner mit goldenem Hintergrund und Countdown.*
 
 ---
 
