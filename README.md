@@ -25,6 +25,7 @@
   - Aktivitäten erfassen und in Echtzeit vergleichen
   - Motivation durch Wetten, Achievements und ein monatliches Leaderboard steigern
   - Trainingsabsprachen über einen integrierten Kalender ermöglichen
+  - Eine solide technische Basis mit SvelteKit, Bootstrap und MongoDB für weitere Erweiterungen schaffen.
 - **Primäre Zielgruppe:** Hobby- und Vereinsschwimmer, die sich gegenseitig zu regelmässigem Training motivieren wollen, typischerweise im Alter von 16 bis 35 Jahren
 - **Weitere Stakeholder:** Schwimmclubs, die die App als internes Motivationstool einsetzen könnten
 
@@ -40,18 +41,12 @@
 
   3. **Kalender — Trainingsplanung und Einladungen:** Der Kalender stellt alle erfassten Schwimmaktivitäten in einer Monatsübersicht dar; Tage mit Aktivitäten sind markiert und zeigen Anzahl Einheiten sowie Gesamtdistanz an. Per Klick auf einen Tag öffnet sich ein Modal, über das ein anderer registrierter Schwimmer zu einem gemeinsamen Training eingeladen werden kann (Datum, Uhrzeit, Ort, optionale Nachricht). Einladungen werden In-App zugestellt und erscheinen nach Annahme im Kalender und auf der Battle-Seite unter "Upcoming Swims Together".
 
-  4. **Achievements — Freischaltbare Abzeichen:** Das Achievement-System umfasst 12 freischaltbare Abzeichen für Meilensteine wie Distanzrekorde, Trainingsserien, Schwimmstil-Vielfalt und Battle-Teilnahme. Freigeschaltete Badges erscheinen farbig mit Freischaltdatum, gesperrte sind ausgegraut mit Fortschrittsbalken. Das höchste Achievement eines Nutzers wird beim Gegner in der Battle-Auswahl angezeigt und unterstreicht so den Wettkampfcharakter bereits bei der Gegnerauswahl.
-
-  5. **Leaderboard — Monatliche Rangliste:** Auf der Battle-Seite erscheint ganz oben eine Top-5-Rangliste der aktivsten Schwimmer des laufenden Kalendermonats nach geschwommener Gesamtdistanz. Ränge 1 bis 3 sind gold, silber und bronze hervorgehoben. Das spezielle "Sardine"-Achievement für fünf aufeinanderfolgende Niederlagen sorgt für humorvolle Selbstironie und motiviert auch weniger aktive Nutzer zur Battle-Teilnahme.
-
-  6. **Profil — Statistiken, Analyse und Einstellungen:** Die Profilseite zeigt neben Benutzerdaten und Profilbild ein interaktives Liniendiagramm der geschwommenen Distanz über die letzten 7 Tage, 30 Tage oder 3 Monate. Eine Wochenanalyse-Tabelle fasst Distanz, Sessions, Pace und Kalorienverbrauch der letzten 8 Wochen zusammen; persönliche Rekorde (längste Session, schnellste Pace, längste Streak) werden separat ausgewiesen. Dark-Mode-Toggle und eingehende Trainingseinladungen sind ebenfalls hier zugänglich.
+  4. **Profil — Statistiken, Analyse und Einstellungen:** Die Profilseite zeigt neben Benutzerdaten und Profilbild ein interaktives Liniendiagramm der geschwommenen Distanz über die letzten 7 Tage, 30 Tage oder 3 Monate. Eine Wochenanalyse-Tabelle fasst Distanz, Sessions, Pace und Kalorienverbrauch der letzten 8 Wochen zusammen; persönliche Rekorde (längste Session, schnellste Pace, längste Streak) werden separat ausgewiesen. Dark-Mode-Toggle und eingehende Trainingseinladungen sind ebenfalls hier zugänglich.
 
   **Übersicht:**
   - **Activity Log:** Schwimmaktivitäten erfassen mit Distanz, Dauer, Schwimmstil, Poolgrösse, Notizen sowie automatisch berechneter Pace und Kalorienverbrauch
   - **Battle:** Zwei Nutzer treten gegeneinander an; wer zuerst eine definierte Vorsprungs-Distanz erreicht, gewinnt. Ein animierter Balken zeigt den aktuellen Stand visuell
   - **Kalender:** Aktivitäten werden im Kalender dargestellt; Nutzer können andere Schwimmer zu gemeinsamen Trainings einladen
-  - **Achievements:** Freischaltbare Abzeichen motivieren zu regelmässigem Training und sportlichen Leistungen
-  - **Leaderboard:** Monatliche Top-Rangliste aller Nutzer nach geschwommener Distanz
   - **Profil:** Profilbild, Statistiken, Analyse-Diagramme und Dark-Mode-Einstellung
 
 **Gesamtworkflow**
@@ -107,12 +102,26 @@ flowchart LR
 
   Zur Problemraumanalyse wurde der persönliche Kontext als Vereinsschwimmer genutzt. Das Kernanliegen ist der fehlende direkte Wettbewerb in bestehenden Tracking-Apps. Eine informelle Befragung im Freundeskreis und Schwimmclub bestätigte das Interesse an einem Battle-Konzept.
 
-  **Proto-Persona: Der Vereinsschwimmer**
-  - Name: Luca, 22 Jahre, Student
-  - Trainiert 3 bis 4 Mal pro Woche im Hallenbad
-  - Nutzt keine Tracking-App
-  - Möchte mit seinem Trainingspartner wetteifern und Wetten abschliessen
-  - Ist tech-affin und nutzt sein Smartphone täglich
+  **Proto-Persona 1 — Der Vereinsschwimmer**
+  - **Name:** Luca, 22 Jahre, Student
+  - **Alter & Rolle:** 22 Jahre, Student
+  - **Trainingsverhalten:** Trainiert 3–4× pro Woche im Hallenbad
+  - **Ziel:** Mit Trainingspartner wetteifern, Wetten abschliessen
+  - **Pain Point:** Bestehende Apps zeigen keinen direkten Vergleich mit einem Gegner
+
+  **Proto-Persona 2 — Die Hobbyläuferin**
+  - **Name:** Sara, 27 Jahre, Berufseinsteigerin
+  - **Alter & Rolle:** 27 Jahre, Berufseinsteigerin
+  - **Trainingsverhalten:** Schwimmt 1–2× pro Woche als Ausgleich; nutzt Strava für Laufen, aber nicht für Schwimmen
+  - **Ziel:** Sich mit einer Freundin gegenseitig motivieren
+  - **Pain Point:** Kein Tool verbindet Trainingsplanung mit sozialem Wettkampf
+
+  **Proto-Persona 3 — Der Vereinstrainer**
+  - **Name:** Marco, 38 Jahre, Hobbytrainer im Schwimmclub
+  - **Alter & Rolle:** 38 Jahre, Hobbytrainer
+  - **Trainingsverhalten:** Organisiert Trainings für eine Gruppe von 8–10 Schwimmern
+  - **Ziel:** Mitglieder zwischen den Trainings motivieren
+  - **Pain Point:** Kein einfaches Tool für internen Wettkampf ohne App-Installation
 
 - **Wesentliche Erkenntnisse:**
   - Bestehende Apps (Strava, Garmin) haben kein direktes 1v1-Duell-System für Schwimmen
@@ -128,16 +137,16 @@ flowchart LR
 
   Im Rahmen der Crazy-8s-Methode wurden 8 verschiedene Varianten für den zentralen Battle-Screen skizziert. Die Varianten unterschieden sich hauptsächlich in der Darstellung des Vergleichs (Balken, Tabelle, Kreisdiagramm, Duell-Ansicht mit zwei Profilen).
 
-- **Skizzen:**
-![Skizzen Varianten](doc/skizze.jpg)
+![Handskizzen Crazy-8s](doc/skizze.jpg)
+
   | Variante | Beschreibung |
   |---|---|
-  | Skizze 1 | Einfache Tabelle mit kalender |
+  | Skizze 1 | Einfache Tabelle mit Kalender |
   | Skizze 2 | Duell-Ansicht mit zwei Spielerprofilen und Vergleichsbalken oben |
-  | Skizze 3 | Fokus auf Kalender keine Battle-Bar sondern mit Zahlen gelöst|
+  | Skizze 3 | Fokus auf Kalender, keine Battle-Bar, sondern mit Zahlen gelöst |
   | Skizze 4 | Chat-ähnliche Ansicht mit Messagebox für Wette |
   | Skizze 5 | Technische Visualisierung mit Graphen (als unübersichtlich bewertet) |
-  | Skizze 6 | Schriftliche Lösung der Activity Logs. Fokus auf graphische Darstellung |
+  | Skizze 6 | Schriftliche Lösung der Activity Logs, Fokus auf graphische Darstellung |
   | Skizze 7 | Dashboard-Ansicht mit mehreren Widgets |
   | Skizze 8 | Message-Funktion im Vordergrund mit Battle als Nebenelement |
 
@@ -173,14 +182,17 @@ flowchart LR
 **User Journey Map**
 
 ```mermaid
-flowchart LR
-    S1[1. App öffnen] --> S2[2. Login / Registrierung]
-    S2 --> S3[3. Battle erstellen]
-    S3 --> S4[4. Aktivität loggen]
-    S4 --> S5[5. Battle-Stand verfolgen]
-    S5 --> S6{6. Vorsprung = Zieldistanz?}
-    S6 -- Nein --> S4
-    S6 -- Ja --> S7[7. Battle gewonnen]
+flowchart TD
+    A[App öffnen] --> B[Login / Registrierung]
+    B --> C[Activity Log — Startseite]
+    C --> D[Battle-Seite aufrufen]
+    D --> E["Gegner auswählen & Battle erstellen\nZieldistanz + optionale Wette"]
+    E --> F[Schwimmaktivität loggen]
+    F --> G["Battle-Stand prüfen\nanimierter Wellenbalken"]
+    G --> H{Vorsprung = Zieldistanz?}
+    H -- Nein --> F
+    H -- Ja --> I[You Win! Banner]
+    I --> J[Ergebnis in Battle-History & Profil]
 ```
 
 - **Mockup:**
@@ -191,15 +203,20 @@ flowchart LR
 
   Erstellte Screens:
 
-  | Welcome Screen | Login Screen | Register Screen |
-  |---|---|---|
-  | ![Welcome Screen](doc/welcomescreen.png) | ![Login Screen](doc/loginscreen.png) | ![Register Screen](doc/registerscreen.png) |
+**Welcome Screen**
+![Welcome Screen](doc/welcomescreen.png)
 
-  | Battle Screen | Calendar Screen |
-  |---|---|
-  | ![Battle Screen](doc/battlescreen.png) | ![Calendar Screen](doc/calenderscreen.png) |
+**Login Screen**
+![Login Screen](doc/loginscreen.png)
 
-  *Mobile-First Design mit Bottom Navigation. Der Battle-Screen zeigt den zentralen Vergleichsbalken zwischen zwei Spielern. Der Calendar-Screen ermöglicht die Planung und Einsicht vergangener Schwimmeinheiten.*
+**Register Screen**
+![Register Screen](doc/registerscreen.png)
+
+**Battle Screen**
+![Battle Screen](doc/battlescreen.png)
+
+**Calendar Screen**
+![Calendar Screen](doc/calenderscreen.png)
 ---
 
 ### 3.4 Prototype
@@ -223,89 +240,86 @@ flowchart LR
 
   **Login & Registrierung**
 
-  | Login (Web) | Dark Mode |
-  |---|---|
-  | ![Login](doc/loginweb.png) | ![Dark Mode](doc/darkmode.png) |
-
-  *Split-Layout mit Logo links und Formular rechts. Dark Mode Toggle im Profil
-  unter Edit Profile.*
+  ![Login Web](doc/loginweb.png)
+  *Split-Layout mit Logo links und Formular rechts. Dark Mode Toggle im Profil unter Edit Profile.*
 
   ---
 
   **Activity Log**
 
-  | Activity Log (Light) | Activity Log (Dark) | Activity Log (Mobile) |
-  |---|---|---|
-  | ![Activity Log](doc/activitylogweb.png) | ![Activity Log Dark](doc/activitylogwebdark.png) | ![Activity Log Mobile](doc/mobileweb.png) |
+  ![Activity Log](doc/activitylogweb.png)
+  *Übersicht aller Schwimmaktivitäten mit Gesamtstatistiken (Distanz, Dauer, Pace, Kalorien). Jede Aktivität zeigt Schwimmstil, Poolgrösse und berechnete Kennzahlen.*
 
-  *Übersicht aller Schwimmaktivitäten mit Gesamtstatistiken (Distanz, Dauer, Pace,
-  Kalorien). Jede Aktivität zeigt Schwimmstil, Poolgrösse und berechnete Kennzahlen.
-  Auf Mobile wird eine Bottom Navigation angezeigt damit der Nutzer nach dem Schwimmen
-  schnell seine Daten erfassen kann.*
+  ![Activity Log Dark](doc/activitylogwebdark.png)
+  *Dark Mode Ansicht des Activity Logs.*
+
+  ![Activity Log Mobile](doc/mobileweb.png)
+  *Mobile-Ansicht mit Bottom Navigation — ermöglicht schnelles Erfassen direkt nach dem Training.*
 
   ---
 
   **Battle**
 
-  | Battle Leaderboard | Battle Bar |
-  |---|---|
-  | ![Battle](doc/battleweb.png) | ![Battle Bar](doc/battlebarweb.png) |
+  ![Battle Leaderboard](doc/battleweb.png)
+  *Die Battle-Seite zeigt oben das monatliche Top-5-Leaderboard. Darunter die Gegnerauswahl und das Battle-Formular.*
 
-  *Die Battle-Seite zeigt oben das monatliche Top-5-Leaderboard. Der animierte
-  Wellenbalken verschiebt sich relativ zur Zieldistanz.*
+  ![Battle erstellen](doc/challengecreate.png)
+  *Gegner auswählen und Battle mit Zieldistanz und optionaler Wette erstellen.*
 
-  **Battle gewonnen**
+  ![Battle erstellt](doc/challengecreate1.png)
+  *Aktives Battle mit animiertem Wellenbalken. Der Balken verschiebt sich relativ zur Zieldistanz.*
+
+  ![Battle Bar](doc/battlebarweb.png)
+  *Der animierte Wellenbalken zeigt den aktuellen Vorsprung oder Rückstand in Echtzeit.*
 
   ![Battle Won](doc/battlebarwonweb.png)
-
-  *Bei Erreichen der Zieldistanz erscheint ein "You Win!" Banner mit
-  goldenem Hintergrund.*
+  *Bei Erreichen der Zieldistanz erscheint ein „You Win!" Banner mit goldenem Hintergrund.*
 
   ---
 
-  **Calendar**
+  **Kalender**
 
-  ![Calendar](doc/calenderweb.png)
+  ![Kalender Übersicht](doc/calenderweb.png)
+  *Kalenderansicht mit markierten Schwimmtagen. Tage mit Aktivitäten zeigen Anzahl Swims und Gesamtdistanz.*
 
-  *Kalenderansicht mit markierten Schwimmtagen. Tage mit Aktivitäten zeigen
-  Anzahl Swims und Gesamtdistanz. Klick auf einen Tag ermöglicht das Einladen
-  eines Trainingspartners.*
+  ![Kalender Einladung](doc/calendercreate1.png)
+  *Klick auf einen Tag öffnet die Tagesansicht mit „Invite to Swim on This Day"-Button.*
 
   ---
 
   **Achievements**
 
   ![Achievements](doc/achievementsweb.png)
-
-  *12 freischaltbare Abzeichen mit Fortschrittsbalken. Freigeschaltete Badges
-  sind farbig mit Datum, gesperrte ausgegraut.*
+  *12 freischaltbare Abzeichen mit Gesamtfortschrittsbalken. Freigeschaltete Badges sind farbig mit Datum, gesperrte ausgegraut.*
 
   ---
 
   **Profil**
 
-  | Profil Übersicht | Swim Distanz Diagramm |
-  |---|---|
-  | ![Profil](doc/profileweb.png) | ![Diagramm](doc/diagrammweb.png) |
+  ![Profil](doc/profileweb.png)
+  *Profilseite mit Benutzerdaten, Swim Invitations und Statistik-Cards.*
 
-  *Profilseite mit Benutzerdaten, Swim Invitations und Statistik-Cards.
-  Das Liniendiagramm zeigt die Schwimmdistanz der letzten 7 Tage, 30 Tage
-  oder 3 Monate.*
+  ![Swim Distance Diagramm](doc/diagrammweb.png)
+  *Interaktives Liniendiagramm der Schwimmdistanz — umschaltbar zwischen 7 Tagen, 30 Tagen und 3 Monaten.*
 
   ---
 
   **Figma Mockup (Ursprüngliches Design)**
 
-  | Welcome Screen | Login Screen | Register Screen |
-  |---|---|---|
-  | ![Welcome](doc/welcomescreen.png) | ![Login](doc/loginscreen.png) | ![Register](doc/registerscreen.png) |
+  ![Welcome Screen Mockup](doc/welcomescreen.png)
+  *Figma Welcome Screen — ursprüngliches Mobile-First Design.*
 
-  | Battle Screen (Mockup) | Calendar Screen (Mockup) |
-  |---|---|
-  | ![Battle Mockup](doc/battlescreen.png) | ![Calendar Mockup](doc/calenderscreen.png) |
+  ![Login Screen Mockup](doc/loginscreen.png)
+  *Figma Login Screen.*
 
-  *Ursprüngliches Figma Mockup als Mobile-App konzipiert. Die finale Umsetzung
-  erfolgte als responsive Web-App mit Desktop-Sidebar.*
+  ![Register Screen Mockup](doc/registerscreen.png)
+  *Figma Register Screen.*
+
+  ![Battle Screen Mockup](doc/battlescreen.png)
+  *Figma Battle Screen Mockup — ursprüngliches Konzept.*
+
+  ![Calendar Screen Mockup](doc/calenderscreen.png)
+  *Figma Calendar Screen Mockup.*
 
   Link zum interaktiven Prototyp: [Tidemark Figma](https://www.figma.com/proto/l832VC7lrJmZrYmjXIbj88/Tidemark?node-id=0-1&t=WHQFVi8mltOCs599-1)
 
@@ -525,6 +539,9 @@ flowchart LR
 - **Referenz:** Kapitel 3.5 (abgeleitete Verbesserungen)
 - **Aus Evaluation abgeleitet?:** Ja, Wunsch nach Datenvisualisierung wurde von mehreren Testpersonen geäussert
 
+![Swim Distance Diagramm](doc/diagrammweb.png)
+*Interaktives Liniendiagramm mit Zeitbereichs-Auswahl (7 Tage / 30 Tage / 3 Monate).*
+
 ---
 
 ### 4.3 Achievements-System
@@ -537,6 +554,12 @@ flowchart LR
 - **Referenz:** Kapitel 3.5 (abgeleitete Verbesserungen)
 - **Aus Evaluation abgeleitet?:** Ja, Wunsch nach Motivatoren wurde explizit geäussert
 
+![Achievements Übersicht](doc/achievementsweb.png)
+*Achievements-Grid mit freigeschalteten (farbig) und gesperrten (ausgegraut) Badges.*
+
+![Achievements Scrollansicht](doc/achievementsweb2.png)
+*Alle 12 Abzeichen in der Scrollansicht — von First Wave bis Jack of All Strokes.*
+
 ---
 
 ### 4.4 Monatliches Leaderboard
@@ -547,6 +570,9 @@ flowchart LR
   - **Backend:** API-Route `/api/leaderboard/monthly` mit MongoDB-Aggregation nach Monat
 - **Referenz:** Battle-Seite oben
 - **Aus Evaluation abgeleitet?:** Ja, Wunsch nach globalem Ranking geäussert
+
+![Battle Leaderboard](doc/battleweb.png)
+*Top-5-Rangliste des laufenden Monats mit Gold/Silber/Bronze-Hervorhebung.*
 
 ---
 
@@ -560,6 +586,15 @@ flowchart LR
 - **Referenz:** Kapitel 3.5 (abgeleitete Verbesserungen)
 - **Aus Evaluation abgeleitet?:** Ja, Kommunikationsbedarf für Trainingsabsprachen wurde identifiziert
 
+![Kalender mit Invite-Button](doc/calendercreate1.png)
+*Tagesansicht mit „Invite to Swim on This Day"-Button.*
+
+![Invite to Swim Modal](doc/calendercreate2.png)
+*Einladungs-Modal mit Schwimmer-Auswahl, Uhrzeit, Ort und optionaler Nachricht.*
+
+![Invite Sent Bestätigung](doc/calendercreate3.png)
+*Bestätigungsmeldung nach erfolgreich gesendeter Einladung.*
+
 ---
 
 ### 4.6 Dark Mode
@@ -570,6 +605,12 @@ flowchart LR
 - **Referenz:** Profil-Seite, Einstellungsbereich
 - **Aus Evaluation abgeleitet?:** Ja, als Verbesserung nach Evaluation priorisiert
 
+![Dark Mode Toggle](doc/darkmode.png)
+*Dark Mode Toggle im Edit Profile Bereich — ein Klick schaltet das gesamte Theme um.*
+
+![Dark Mode Ansicht](doc/dark1.png)
+*Vollständige Dark Mode Ansicht des Edit Profile Formulars.*
+
 ---
 
 ### 4.7 Animierter Wellenbalken im Battle
@@ -579,6 +620,9 @@ flowchart LR
   - **Frontend:** SVG-Wellenform mit CSS-Animation in der Battle-Komponente, VS-Header mit Profilbildern
 - **Referenz:** Kapitel 3.3, Kapitel 3.5
 - **Aus Evaluation abgeleitet?:** Ja, der Wunsch nach einem variablen, ansprechenderen Balken wurde direkt geäussert
+
+![Battle Bar animiert](doc/battlebarweb.png)
+*Der animierte Wellenbalken verschiebt sich kontinuierlich und zeigt den relativen Vorsprung.*
 
 ---
 
