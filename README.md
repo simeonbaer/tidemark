@@ -25,7 +25,6 @@
   - Aktivitäten erfassen und in Echtzeit vergleichen
   - Motivation durch Wetten, Achievements und ein monatliches Leaderboard steigern
   - Trainingsabsprachen über einen integrierten Kalender ermöglichen
-  - Eine solide technische Basis mit SvelteKit, Bootstrap und MongoDB für weitere Erweiterungen schaffen.
 - **Primäre Zielgruppe:** Hobby- und Vereinsschwimmer, die sich gegenseitig zu regelmässigem Training motivieren wollen, typischerweise im Alter von 16 bis 35 Jahren
 - **Weitere Stakeholder:** Schwimmclubs, die die App als internes Motivationstool einsetzen könnten
 
@@ -35,13 +34,13 @@
 
 - **Kernfunktionalität:**
 
-  1. **Activity Log — Aktivitäten erfassen und analysieren:** Schwimmer öffnen den Activity Log direkt nach dem Login und erfassen ihre Trainingseinheit mit Distanz (in Metern), Dauer, Schwimmstil (Kraul, Brust, Rücken, Butterfly), Poolgrösse (25m / 50m / 100m) und einer optionalen Notiz. Die App berechnet automatisch Pace (min/100m), Geschwindigkeit (km/h) und Kalorienverbrauch. Alle Aktivitäten werden chronologisch aufgelistet; Gesamtstatistiken (Gesamtdistanz, Gesamtdauer, Durchschnittspace) erscheinen oben in der Übersicht.
+  1. **Activity Log — Aktivitäten erfassen und analysieren:** Schwimmer erfassen ihre Trainingseinheit mit Distanz, Dauer, Schwimmstil, Poolgrösse und einer optionalen Notiz. Die App berechnet automatisch Pace, Geschwindigkeit und Kalorienverbrauch; alle Aktivitäten werden chronologisch aufgelistet.
 
-  2. **Battle — 1-gegen-1-Duell mit animiertem Balken:** Der Nutzer wählt auf der Battle-Seite einen registrierten Gegner aus, legt eine Zieldistanz (in Metern) und eine optionale Wette fest und erstellt damit ein Battle. Beide Spieler loggen ihre Schwimmaktivitäten, die ab dem Erstellungsdatum des Battles gewertet werden. Ein animierter Wellenbalken verschiebt sich relativ zur Zieldistanz und zeigt jederzeit den aktuellen Vorsprung oder Rückstand an. Wer zuerst einen Vorsprung in Höhe der Zieldistanz herausschwimmt, gewinnt das Battle und erhält ein "You Win!"-Banner.
+  2. **Battle — 1-gegen-1-Duell mit animiertem Balken:** Der Nutzer wählt einen Gegner, legt eine Zieldistanz und eine optionale Wette fest und erstellt damit ein Battle. Ein animierter Wellenbalken zeigt jederzeit den aktuellen Vorsprung oder Rückstand an; wer zuerst einen Vorsprung in Höhe der Zieldistanz herausschwimmt, gewinnt das Battle.
 
-  3. **Kalender — Trainingsplanung und Einladungen:** Der Kalender stellt alle erfassten Schwimmaktivitäten in einer Monatsübersicht dar; Tage mit Aktivitäten sind markiert und zeigen Anzahl Einheiten sowie Gesamtdistanz an. Per Klick auf einen Tag öffnet sich ein Modal, über das ein anderer registrierter Schwimmer zu einem gemeinsamen Training eingeladen werden kann (Datum, Uhrzeit, Ort, optionale Nachricht). Einladungen werden In-App zugestellt und erscheinen nach Annahme im Kalender und auf der Battle-Seite unter "Upcoming Swims Together".
+  3. **Kalender — Trainingsplanung und Einladungen:** Der Kalender stellt alle Schwimmaktivitäten in einer Monatsübersicht dar; per Klick auf einen Tag lässt sich ein anderer Schwimmer zu einem gemeinsamen Training einladen. Einladungen werden In-App zugestellt und erscheinen nach Annahme im Kalender und auf der Battle-Seite.
 
-  4. **Profil — Statistiken, Analyse und Einstellungen:** Die Profilseite zeigt neben Benutzerdaten und Profilbild ein interaktives Liniendiagramm der geschwommenen Distanz über die letzten 7 Tage, 30 Tage oder 3 Monate. Eine Wochenanalyse-Tabelle fasst Distanz, Sessions, Pace und Kalorienverbrauch der letzten 8 Wochen zusammen; persönliche Rekorde (längste Session, schnellste Pace, längste Streak) werden separat ausgewiesen. Dark-Mode-Toggle und eingehende Trainingseinladungen sind ebenfalls hier zugänglich.
+  4. **Profil — Statistiken, Analyse und Einstellungen:** Die Profilseite zeigt Benutzerdaten, ein interaktives Liniendiagramm der Schwimmdistanz und eine Wochenanalyse-Tabelle. Persönliche Rekorde, Dark-Mode-Toggle und eingehende Trainingseinladungen sind ebenfalls hier zugänglich.
 
   **Übersicht:**
   - **Activity Log:** Schwimmaktivitäten erfassen mit Distanz, Dauer, Schwimmstil, Poolgrösse, Notizen sowie automatisch berechneter Pace und Kalorienverbrauch
@@ -66,21 +65,6 @@ flowchart TD
     I --> J[Battle-History & Profil aktualisiert]
 ```
 
-**Auth- & Battle-Workflow**
-
-```mermaid
-flowchart LR
-    A[Nutzer] --> B{Eingeloggt?}
-    B -- Nein --> C[Login-Seite]
-    C --> D[Anmelden / Registrieren]
-    D --> B
-    B -- Ja --> E[Geschützte Aktionen verfügbar]
-    E --> F[Battle erstellen]
-    E --> G[Aktivität loggen]
-    E --> H[Kalender-Einladung senden]
-    E --> I[Profil bearbeiten]
-```
-
 - **Annahmen:**
   - Nutzer sind bereit, ihre Aktivitäten manuell einzugeben (kein GPS-Tracking nötig)
   - Das 1-gegen-1-Konzept ist motivierender als reine Selbstverfolgung
@@ -88,7 +72,7 @@ flowchart LR
 
 - **Abgrenzung:**
   - Kein GPS-Tracking
-  - Keine Gruppen-Battles (nur 1v1)
+  - Keine Gruppen-Battles (nur 1-gegen-1)
   - Kein E-Mail-Versand für Benachrichtigungen (nur In-App)
   - Keine Integration mit Wearables oder externen Sportgeräten
 
@@ -103,28 +87,28 @@ flowchart LR
   Zur Problemraumanalyse wurde der persönliche Kontext als Vereinsschwimmer genutzt. Das Kernanliegen ist der fehlende direkte Wettbewerb in bestehenden Tracking-Apps. Eine informelle Befragung im Freundeskreis und Schwimmclub bestätigte das Interesse an einem Battle-Konzept.
 
   **Proto-Persona 1 — Der Vereinsschwimmer**
-  - **Name:** Luca, 22 Jahre, Student
-  - **Alter & Rolle:** 22 Jahre, Student
+  - **Name:** Luca
+  - **Beruf & Rolle:** Student, 22 Jahre
   - **Trainingsverhalten:** Trainiert 3–4× pro Woche im Hallenbad
   - **Ziel:** Mit Trainingspartner wetteifern, Wetten abschliessen
   - **Pain Point:** Bestehende Apps zeigen keinen direkten Vergleich mit einem Gegner
 
-  **Proto-Persona 2 — Die Hobbyläuferin**
-  - **Name:** Sara, 27 Jahre, Berufseinsteigerin
+  **Proto-Persona 2 — Die Hobbyschwimmerin**
+  - **Name:** Sara
   - **Alter & Rolle:** 27 Jahre, Berufseinsteigerin
   - **Trainingsverhalten:** Schwimmt 1–2× pro Woche als Ausgleich; nutzt Strava für Laufen, aber nicht für Schwimmen
   - **Ziel:** Sich mit einer Freundin gegenseitig motivieren
   - **Pain Point:** Kein Tool verbindet Trainingsplanung mit sozialem Wettkampf
 
   **Proto-Persona 3 — Der Vereinstrainer**
-  - **Name:** Marco, 38 Jahre, Hobbytrainer im Schwimmclub
-  - **Alter & Rolle:** 38 Jahre, Hobbytrainer
+  - **Name:** Marco
+  - **Alter & Rolle:** 38 Jahre, Trainer
   - **Trainingsverhalten:** Organisiert Trainings für eine Gruppe von 8–10 Schwimmern
-  - **Ziel:** Mitglieder zwischen den Trainings motivieren
-  - **Pain Point:** Kein einfaches Tool für internen Wettkampf ohne App-Installation
+  - **Ziel:** Mitglieder ausserhalb vom Training motivieren
+  - **Pain Point:** Kein einfaches Tool für internen Wettkampf
 
 - **Wesentliche Erkenntnisse:**
-  - Bestehende Apps (Strava, Garmin) haben kein direktes 1v1-Duell-System für Schwimmen
+  - Bestehende Apps (Strava, Garmin) haben kein direktes 1-gegen-1-Duell-System für Schwimmen
   - Die Motivation durch Wetten und sichtbaren Rückstand/Vorsprung ist ein starker Antrieb
   - Einfache, intuitive Eingabe ist wichtiger als ein grosser Funktionsumfang
   - Der Battle-Balken muss sofort verständlich sein ohne Erklärung
@@ -156,27 +140,6 @@ flowchart LR
 
 - **Entscheid:** Skizze 2 angepasst (direkter Spielervergleich mit Balken und Wette)
 
-- **Figma-Mockup (Mobile-First Entwurf):**
-
-  Tool: Figma (kostenlos, browserbasiert, interaktive Klick-Verbindungen)
-
-  Link: [Tidemark Figma Prototyp](https://www.figma.com/proto/l832VC7lrJmZrYmjXIbj88/Tidemark?node-id=0-1&t=WHQFVi8mltOCs599-1)
-
-  **Welcome Screen**
-  ![Welcome Screen](doc/welcomescreen.png)
-
-  **Login Screen**
-  ![Login Screen](doc/loginscreen.png)
-
-  **Register Screen**
-  ![Register Screen](doc/registerscreen.png)
-
-  **Battle Screen**
-  ![Battle Screen](doc/battlescreen.png)
-
-  **Calendar Screen**
-  ![Calendar Screen](doc/calenderscreen.png)
-
 ---
 
 ### 3.3 Decide
@@ -190,7 +153,8 @@ flowchart LR
   - Intuitivität: keine Erklärung nötig
   - Wettkampfcharakter: visuell ansprechend und motivierend
   - Erweiterbarkeit: Achievements, Leaderboard und Kalender lassen sich ergänzen
-**End-to-End-Ablauf (User Journey):**
+
+  - **End-to-End-Ablauf (User Journey):**
 
   1. Nutzer öffnet die App und landet auf der Login/Register-Seite
   2. Nach der Registrierung und der Anmeldung kommt er direkt zum Activity Log
@@ -216,7 +180,31 @@ flowchart TD
     I --> J[Ergebnis in Battle-History & Profil]
 ```
 
+  - **Mockup:**
 
+  Tool: Figma (kostenlos, browserbasiert, interaktive Klick-Verbindungen)
+
+  Link: [Tidemark Figma Prototyp](https://www.figma.com/proto/l832VC7lrJmZrYmjXIbj88/Tidemark?node-id=0-1&t=WHQFVi8mltOCs599-1)
+
+  **Welcome Screen**
+
+  ![Welcome Screen](doc/welcomescreen.png)
+
+  **Login Screen**
+
+  ![Login Screen](doc/loginscreen.png)
+
+  **Register Screen**
+
+  ![Register Screen](doc/registerscreen.png)
+
+  **Battle Screen**
+
+  ![Battle Screen](doc/battlescreen.png)
+
+  **Calendar Screen**
+  
+  ![Calendar Screen](doc/calenderscreen.png)
 
 ### 3.4 Prototype
 
@@ -389,12 +377,13 @@ flowchart TD
   ohne technische Vorgaben oder Aufgaben.
 - **Vorgehen:** Unmoderiert, Die Testpersonen nutzten die App frei 
   ohne Anleitung.
+- **Aufgaben/Szenarien:** Da der Test unmoderiert und ohne vorgegebene Aufgaben durchgeführt wurde (freie Nutzung), wurden keine formalisierten Szenarien eingesetzt.
 - **Beobachtungen:**
   - Die App wirkt intuitiv und ansprechend
   - Die Anmeldung funktionierte problemlos
   - Der Battle-Balken war verständlich
   - Vergangene Aktivitäten wurden fälschlicherweise in neue Battles 
-    eingerechnet. Wer länger auf der App war hatte einen unfairen Vorteil
+    eingerechnet. Wer länger auf der App war, hatte einen unfairen Vorteil
   - Die Pace-Darstellung entsprach nicht dem Standard von Garmin 
   - Der Kalorienverbrauch wurde als ungenau wahrgenommen
   - Der Wunsch nach mehr Datenvisualisierung wurde geäussert
@@ -414,6 +403,7 @@ flowchart TD
   über eine Woche im echten Trainingsalltag nutzten.
 - **Vorgehen:** Unmoderiert, über eine Woche. Beide Nutzer schwammen 
   gegeneinander und nutzten alle Funktionen der App im realen Kontext.
+- **Aufgaben/Szenarien:** Beide Nutzer schwammen über eine Woche gegeneinander und nutzten alle App-Funktionen im realen Trainingsalltag ohne vordefinierte Aufgabenstruktur.
 - **Beobachtungen:**
   - Das Battle-Konzept funktioniert motivierend im realen Nutzungskontext
   - Ein Battle über eine Woche war problemlos durchführbar
@@ -599,20 +589,15 @@ flowchart TD
 
 - **Repository & Struktur:** [https://github.com/simeonbaer/tidemark](https://github.com/simeonbaer/tidemark)
 
-  ```
-  tidemark/
-  ├── src/           # SvelteKit Quellcode
-  ├── static/        # Statische Assets (Logo, Favicon)
-  ├── doc/           # Projektdokumentation und Artefakte
-  ├── README.md      # Diese Dokumentation
-  └── .env           # Umgebungsvariablen (nicht im Repo)
-  ```
+  Siehe Kap. 3.4.2 für die vollständige Verzeichnisstruktur.
 
 - **Commit-Praxis:** Sprechende Commits mit Präfix-Konvention:
   - `feat:` für neue Features
   - `fix:` für Bugfixes
   - `refactor:` für Umstrukturierungen
   - Beispiele: `feat: achievements system and monthly leaderboard`, `fix: battle bar position calculation relative to goal`
+
+- **Issue-Management:** Da es sich um ein Einzelprojekt handelt, wurde kein formales Issue-Tracking-System eingesetzt. Aufgaben wurden über handschriftliche To-do-Listen und direkte Commit-Beschreibungen verwaltet.
 
 ---
 
@@ -624,7 +609,7 @@ flowchart TD
   - **GitHub Copilot** (Agent Mode in VS Code): Initiales Projekt-Setup und erste Grundstruktur
   - **Claude Code** (Anthropic, Sonnet 4.5): Hauptwerkzeug für Feature-Entwicklung, Bugfixes und Refactoring
   - **Claude** (claude.ai, Sonnet 4.6): Konzeption, Prompt-Planung, Dokumentation, Bildbearbeitung (Logo-Hintergrundentfernung)
-  - **ChatGPT** (GPT-4o): Bildbearbeitung für Logo-Optimierung
+  - **ChatGPT** (GPT-4o): Logo-Generierung mit DALL-E sowie Bildbearbeitung (Hintergrundentfernung) für Logo-Optimierung.
 
 - **Zweck & Umfang:**
   - **Copilot:** Erstellung der initialen Projektstruktur, MongoDB-Anbindung, Basis-Routing. Der generierte Code enthielt Svelte-4-Syntax-Fehler, die anschliessend mit Claude Code korrigiert wurden.
@@ -668,6 +653,7 @@ Urheberrechtlich verwendete Assets (Logo) wurden mit KI-Bildtools erstellt und l
 - **Figma Mockup:** [https://www.figma.com/proto/l832VC7lrJmZrYmjXIbj88/Tidemark](https://www.figma.com/proto/l832VC7lrJmZrYmjXIbj88/Tidemark?node-id=0-1&t=WHQFVi8mltOCs599-1)
 - **Deployed App:** [https://tidemark-zhaw.netlify.app](https://tidemark-zhaw.netlify.app)
 - **GitHub Repository:** [https://github.com/simeonbaer/tidemark](https://github.com/simeonbaer/tidemark)
+- **Testskript & Materialien (Phase 3):** Aufgaben und Beobachtungen sind direkt in Kap. 3.5 dokumentiert; kein separates Testskript vorhanden.
 - **Quellen & Assets:**
   - Logo: KI-generiert mit DALL-E (ChatGPT), Eigentumsrecht beim Autor
   - Tailwind CSS: MIT-Lizenz
