@@ -42,12 +42,6 @@
 
   4. **Profil — Statistiken, Analyse und Einstellungen:** Die Profilseite zeigt Benutzerdaten, ein interaktives Liniendiagramm der Schwimmdistanz und eine Wochenanalyse-Tabelle. Persönliche Rekorde, Dark-Mode-Toggle und eingehende Trainingseinladungen sind ebenfalls hier zugänglich.
 
-  **Übersicht:**
-  - **Activity Log:** Schwimmaktivitäten erfassen mit Distanz, Dauer, Schwimmstil, Poolgrösse, Notizen sowie automatisch berechneter Pace und Kalorienverbrauch
-  - **Battle:** Zwei Nutzer treten gegeneinander an; wer zuerst eine definierte Vorsprungs-Distanz erreicht, gewinnt. Ein animierter Balken zeigt den aktuellen Stand visuell
-  - **Kalender:** Aktivitäten werden im Kalender dargestellt; Nutzer können andere Schwimmer zu gemeinsamen Trainings einladen
-  - **Profil:** Profilbild, Statistiken, Analyse-Diagramme und Dark-Mode-Einstellung
-
 **Gesamtworkflow**
 
 ```mermaid
@@ -154,7 +148,7 @@ flowchart TD
   - Wettkampfcharakter: visuell ansprechend und motivierend
   - Erweiterbarkeit: Achievements, Leaderboard und Kalender lassen sich ergänzen
 
-  - **End-to-End-Ablauf (User Journey):**
+- **End-to-End-Ablauf (User Journey):**
 
   1. Nutzer öffnet die App und landet auf der Login/Register-Seite
   2. Nach der Registrierung und der Anmeldung kommt er direkt zum Activity Log
@@ -180,7 +174,7 @@ flowchart TD
     I --> J[Ergebnis in Battle-History & Profil]
 ```
 
-  - **Mockup:**
+- **Mockup:**
 
   Tool: Figma (kostenlos, browserbasiert, interaktive Klick-Verbindungen)
 
@@ -222,6 +216,15 @@ flowchart TD
   | Calendar | Aktivitäten im Kalender, Trainingseinladungen |
   | Achievements | Freigeschaltete Abzeichen und Fortschritt |
   | Profil | Benutzerdaten, Statistiken, Diagramme, Einstellungen |
+
+- **Komponenten:**
+
+  Wiederverwendbare Svelte-Komponenten in `src/lib/components/`:
+
+  | Komponente | Beschreibung |
+  |---|---|
+  | `Navigation.svelte` | Desktop-Sidebar (dark navy, #0D1B4B) mit Logo und Links zu allen 5 Hauptseiten sowie Logout; enthält auch Mobile Bottom Navigation mit Invite-Benachrichtigungs-Badge |
+  | `Nav.svelte` | Ältere Navigationskomponente: Desktop-Top-Nav mit 3 Links (Battle, Activity Log, Calendar) und Mobile Header mit Logout-Button |
 
 - **User Interface Design:**
 
@@ -291,11 +294,16 @@ flowchart TD
 #### 3.4.2 Umsetzung (Technik)
 
 - **Technologie-Stack:**
-  - **Frontend:** SvelteKit 5 mit TypeScript
-  - **Styling:** Tailwind CSS
-  - **Datenbank:** MongoDB Atlas
-  - **Authentifizierung:** Eigene Session-basierte Lösung mit JWT
-  - **Bildupload:** Base64-Encoding in MongoDB
+
+  | Kategorie | Technologie | Version | Zweck |
+  |---|---|---|---|
+  | Framework | SvelteKit | 5.x | Full-Stack Web-Framework (Routing, SSR, API-Routen) |
+  | Sprache | TypeScript | 5.x | Typsicherheit im gesamten Projekt |
+  | Styling | Tailwind CSS | 3.x | Utility-first CSS Framework |
+  | Datenbank | MongoDB Atlas | 7.x | Dokumentenbasierte NoSQL-Datenbank (Cloud) |
+  | Authentifizierung | JWT (eigene Session-Lösung) | — | Session-basierte Auth via HTTP-Only Cookie |
+  | Bildupload | Base64 in MongoDB | — | Profilbilder direkt im User-Dokument gespeichert |
+  | Deployment | Netlify | — | Automatisches Deployment via GitHub (main-Branch) |
 
 - **Tooling:**
   - IDE: Visual Studio Code
@@ -339,6 +347,16 @@ flowchart TD
   | swim_invites | fromUserId, toUserId, date, time, location, message, status |
 
   Alle Datenbankzugriffe erfolgen ausschliesslich über SvelteKit API-Routen (+server.ts), nie direkt vom Client.
+
+  **Datenfluss:**
+
+  ```
+  Browser (SvelteKit +page.svelte)
+        ↕  fetch / Form Action
+  SvelteKit API-Route (+server.ts)
+        ↕  MongoDB Node.js Driver
+  MongoDB Atlas (Cloud)
+  ```
 
 - **Deployment:**
   - Produktions-URL: [https://tidemark-zhaw.netlify.app](https://tidemark-zhaw.netlify.app)
@@ -615,7 +633,7 @@ flowchart TD
   - **Copilot:** Erstellung der initialen Projektstruktur, MongoDB-Anbindung, Basis-Routing. Der generierte Code enthielt Svelte-4-Syntax-Fehler, die anschliessend mit Claude Code korrigiert wurden.
   - **Claude Code:** Umsetzung aller Features ab Woche 11 (Activity-Log-Erweiterungen, Profilseite, Battle-Bar-Redesign, Achievements, Leaderboard, Kalender-Einladungen, Dark Mode, Diagramme). Alle Prompts wurden bewusst strukturiert und iterativ verfeinert.
   - **Claude (claude.ai):** Architekturentscheidungen besprochen, Prompts für Claude Code ausgearbeitet, README geschrieben, Logo-PNG-Hintergrund entfernt (Python/Pillow).
-  - **ChatGPT:** Logo-Hintergrundentfernung als Alternative getestet.
+  - **ChatGPT** (GPT-4o, DALL-E): Logo-Generierung via DALL-E sowie Bildbearbeitung (Hintergrundentfernung) als Alternative getestet.
 
 - **Eigene Leistung (Abgrenzung):**
   - Gesamtkonzept, Projektidee und Design-Entscheidungen sind eigenständig erarbeitet
